@@ -1,0 +1,32 @@
+# These are supported funding model platforms
+
+github:
+  - involvex
+
+patreon:
+  - involvex
+
+open_collective:
+  - whatsapp-cli
+
+ko_fi:
+  - involvex
+
+tidelift:
+  - npm/@involvex/whatsapp-cli
+
+community_bridge:
+  - whatsapp-cli
+
+liberapay:
+  - involvex
+
+issuehunt:
+  - involvex
+
+otechie:
+  - involvex
+
+custom:
+  - https://github.com/sponsors/involvex
+  - https://paypal.me/involvex
