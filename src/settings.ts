@@ -5,6 +5,7 @@ import {
   getConfig,
   saveConfig,
   getAvailableModels,
+  PATHS,
   type CliConfig,
 } from "./config";
 
@@ -44,10 +45,7 @@ export async function showSettingsMenu(rl: ReadlineInterface): Promise<void> {
             ? colors.success("Enabled")
             : colors.error("Disabled"),
         ],
-        [
-          "Log Level",
-          colors.highlight(config.logging.level.toUpperCase()),
-        ],
+        ["Log Level", colors.highlight(config.logging.level.toUpperCase())],
         [
           "Chat History",
           config.chatHistoryEnabled
@@ -337,7 +335,7 @@ async function resetSettings(rl: ReadlineInterface): Promise<void> {
         level: "info",
         console: true,
         file: true,
-        filePath: "./logs/whatsapp-cli",
+        filePath: PATHS.logs + "/whatsapp-cli",
         timestamp: true,
         colors: true,
       },
@@ -363,11 +361,21 @@ async function configureLogging(rl: ReadlineInterface): Promise<void> {
     printHeader("Configure Logging");
 
     printSection("Current Logging Settings");
-    console.log(`  Log Level:        ${colors.highlight(config.logging.level.toUpperCase())}`);
-    console.log(`  Console Output:   ${config.logging.console ? colors.success("Enabled") : colors.error("Disabled")}`);
-    console.log(`  File Output:      ${config.logging.file ? colors.success("Enabled") : colors.error("Disabled")}`);
-    console.log(`  Timestamps:       ${config.logging.timestamp ? colors.success("Enabled") : colors.error("Disabled")}`);
-    console.log(`  Colors:           ${config.logging.colors ? colors.success("Enabled") : colors.error("Disabled")}`);
+    console.log(
+      `  Log Level:        ${colors.highlight(config.logging.level.toUpperCase())}`,
+    );
+    console.log(
+      `  Console Output:   ${config.logging.console ? colors.success("Enabled") : colors.error("Disabled")}`,
+    );
+    console.log(
+      `  File Output:      ${config.logging.file ? colors.success("Enabled") : colors.error("Disabled")}`,
+    );
+    console.log(
+      `  Timestamps:       ${config.logging.timestamp ? colors.success("Enabled") : colors.error("Disabled")}`,
+    );
+    console.log(
+      `  Colors:           ${config.logging.colors ? colors.success("Enabled") : colors.error("Disabled")}`,
+    );
     console.log(`  Log File:         ${colors.dim(config.logging.filePath)}`);
 
     console.log("");
@@ -389,25 +397,41 @@ async function configureLogging(rl: ReadlineInterface): Promise<void> {
       case "2":
         config.logging.console = !config.logging.console;
         await saveConfig(config);
-        console.log(colors.success(`Console output ${config.logging.console ? "enabled" : "disabled"}`));
+        console.log(
+          colors.success(
+            `Console output ${config.logging.console ? "enabled" : "disabled"}`,
+          ),
+        );
         await promptUser(rl, "Press Enter to continue...");
         break;
       case "3":
         config.logging.file = !config.logging.file;
         await saveConfig(config);
-        console.log(colors.success(`File output ${config.logging.file ? "enabled" : "disabled"}`));
+        console.log(
+          colors.success(
+            `File output ${config.logging.file ? "enabled" : "disabled"}`,
+          ),
+        );
         await promptUser(rl, "Press Enter to continue...");
         break;
       case "4":
         config.logging.timestamp = !config.logging.timestamp;
         await saveConfig(config);
-        console.log(colors.success(`Timestamps ${config.logging.timestamp ? "enabled" : "disabled"}`));
+        console.log(
+          colors.success(
+            `Timestamps ${config.logging.timestamp ? "enabled" : "disabled"}`,
+          ),
+        );
         await promptUser(rl, "Press Enter to continue...");
         break;
       case "5":
         config.logging.colors = !config.logging.colors;
         await saveConfig(config);
-        console.log(colors.success(`Colors ${config.logging.colors ? "enabled" : "disabled"}`));
+        console.log(
+          colors.success(
+            `Colors ${config.logging.colors ? "enabled" : "disabled"}`,
+          ),
+        );
         await promptUser(rl, "Press Enter to continue...");
         break;
       case "0":
@@ -443,9 +467,19 @@ async function setLogLevel(rl: ReadlineInterface): Promise<void> {
 
   if (index >= 0 && index < LOG_LEVELS.length) {
     const config = getConfig();
-    config.logging.level = LOG_LEVELS[index] as "debug" | "info" | "warn" | "error" | "none";
-    await saveConfig(config);
-    console.log(colors.success(`Log level set to ${LOG_LEVELS[index].toUpperCase()}`));
+    const selectedLevel = LOG_LEVELS[index];
+    if (selectedLevel) {
+      config.logging.level = selectedLevel as
+        | "debug"
+        | "info"
+        | "warn"
+        | "error"
+        | "none";
+      await saveConfig(config);
+      console.log(
+        colors.success(`Log level set to ${selectedLevel.toUpperCase()}`),
+      );
+    }
   } else {
     console.log(colors.error("Invalid selection"));
   }
@@ -460,7 +494,11 @@ async function toggleChatHistory(rl: ReadlineInterface): Promise<void> {
 
   if (config.chatHistoryEnabled) {
     console.log(colors.success("Chat history enabled"));
-    console.log(colors.info("Messages will be saved to: ~/.whatsapp-cli/chat-history.json"));
+    console.log(
+      colors.info(
+        "Messages will be saved to: ~/.whatsapp-cli/chat-history.json",
+      ),
+    );
   } else {
     console.log(colors.warning("Chat history disabled"));
     console.log(colors.dim("Existing history will be preserved"));

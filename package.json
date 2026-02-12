@@ -2,7 +2,13 @@
   "name": "@involvex/whatsapp-cli",
   "version": "0.0.1",
   "description": "A minimal terminal-based WhatsApp client with AI integration",
-  "keyword": ["whatsapp", "cli", "whatsapp-web", "whatsapp-web.js", "whatsapp-cli"],
+  "keyword": [
+    "whatsapp",
+    "cli",
+    "whatsapp-web",
+    "whatsapp-web.js",
+    "whatsapp-cli"
+  ],
   "author": {
     "name": "involvex"
   },

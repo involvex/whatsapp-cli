@@ -23,8 +23,8 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 const DEFAULT_CONFIG: LoggerConfig = {
   level: "info",
   console: true,
-  file: true,
-  filePath: "./.whatsapp-cli-logs",
+  file: false, // Disabled by default until config is loaded
+  filePath: "", // Will be set from config
   timestamp: true,
   colors: true,
 };
@@ -40,7 +40,7 @@ class Logger {
   }
 
   private async initialize(): Promise<void> {
-    if (this.config.file) {
+    if (this.config.file && this.config.filePath) {
       try {
         const logDir = path.dirname(this.config.filePath);
         await fs.mkdir(logDir, { recursive: true });
@@ -62,7 +62,7 @@ class Logger {
   private formatMessage(
     level: LogLevel,
     message: string,
-    meta?: Record<string, unknown>
+    meta?: Record<string, unknown>,
   ): string {
     const timestamp = this.config.timestamp
       ? `[${new Date().toISOString()}] `
@@ -72,7 +72,11 @@ class Logger {
     return `${timestamp}${levelStr}${message}${metaStr}`;
   }
 
-  private log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    meta?: Record<string, unknown>,
+  ): void {
     if (!this.shouldLog(level)) {
       return;
     }
@@ -111,7 +115,7 @@ class Logger {
     const logsToWrite = [...this.logBuffer];
     this.logBuffer = [];
 
-    if (this.config.file) {
+    if (this.config.file && this.config.filePath) {
       try {
         const dateStr = new Date().toISOString().split("T")[0];
         const logFilePath = `${this.config.filePath}-${dateStr}.log`;
@@ -145,14 +149,14 @@ class Logger {
   logMessageEvent(
     event: "sent" | "received" | "failed",
     chatId: string,
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ): void {
     this.info(`Message ${event}`, { chatId, ...details });
   }
 
   logClientEvent(
     event: "qr" | "ready" | "authenticated" | "disconnected" | "auth_failure",
-    details?: Record<string, unknown>
+    details?: Record<string, unknown>,
   ): void {
     this.info(`Client event: ${event}`, details);
   }

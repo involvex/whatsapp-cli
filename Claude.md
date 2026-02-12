@@ -53,6 +53,7 @@ Located in `.github/agents/`
 Specialized agent for WhatsApp CLI development with AI features.
 
 **Capabilities:**
+
 - WhatsApp Web.js integration
 - Puppeteer configuration
 - AI provider setup (OpenRouter, OpenAI, Gemini)
@@ -60,6 +61,7 @@ Specialized agent for WhatsApp CLI development with AI features.
 - Session persistence handling
 
 **Usage:**
+
 ```bash
 # Use the agent for WhatsApp-specific tasks
 "Add support for sending media messages"
@@ -97,6 +99,7 @@ When working with this project in Claude Code, the following context is automati
 ```
 
 Claude will:
+
 1. Read relevant files (cli.ts, ui.ts, client.ts)
 2. Suggest implementation approach
 3. Write the code
@@ -111,6 +114,7 @@ Claude will:
 ```
 
 Claude will:
+
 1. Check qrcode-terminal integration
 2. Review client.ts event handlers
 3. Suggest fixes
@@ -124,6 +128,7 @@ Claude will:
 ```
 
 Claude will:
+
 1. Identify the type mismatch
 2. Suggest proper types from whatsapp-web.js
 3. Update imports if needed
@@ -137,6 +142,7 @@ Claude will:
 ```
 
 Claude will:
+
 1. Analyze current settings.ts structure
 2. Propose modular architecture
 3. Implement changes

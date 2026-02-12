@@ -3,7 +3,7 @@
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | 1.0.x   | ✅ Yes    |
 
 ## Reporting a Vulnerability
@@ -16,6 +16,7 @@ If you discover a security vulnerability, please **do not open a public issue**.
 2. **Private Advisory**: Use GitHub's private vulnerability reporting feature
 
 Please include:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
@@ -82,8 +83,8 @@ const puppeteerOptions: LaunchOptions = {
     "--disable-dev-shm-usage",
     "--disable-gpu",
     "--disable-web-security", // ⚠️ Required for WhatsApp Web
-    "--disable-features=VizDisplayCompositor"
-  ]
+    "--disable-features=VizDisplayCompositor",
+  ],
 };
 ```
 

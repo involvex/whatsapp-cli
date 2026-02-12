@@ -4,7 +4,8 @@ import os from "os";
 import type { LogLevel } from "./logger";
 
 // Centralized ~/.whatsapp-cli directory structure
-const WHATSAPP_CLI_DIR = process.env.WHATSAPP_CLI_DIR || path.join(os.homedir(), ".whatsapp-cli");
+const WHATSAPP_CLI_DIR =
+  process.env.WHATSAPP_CLI_DIR || path.join(os.homedir(), ".whatsapp-cli");
 
 export const PATHS = {
   root: WHATSAPP_CLI_DIR,

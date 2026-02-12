@@ -59,6 +59,7 @@ Brief description of what this agent does.
 ## Context
 
 The agent should understand:
+
 - Project structure
 - Key dependencies
 - Relevant code patterns
@@ -71,6 +72,7 @@ The agent should understand:
 ## Instructions
 
 When invoked, the agent should:
+
 1. Read relevant files
 2. Analyze the request
 3. Propose solution
@@ -122,6 +124,7 @@ author: "involvex"
 ### Agent Permissions
 
 Agents may request:
+
 - File read/write access
 - Package installation
 - Build/compile operations
@@ -138,6 +141,7 @@ Agents may request:
 ### Sensitive Data
 
 Agents should NOT:
+
 - Store API keys in code
 - Commit credentials
 - Share session data

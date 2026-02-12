@@ -40,12 +40,15 @@ export function parseArgs(args: string[]): CliArgs {
         parsed.help = true;
         break;
       case "--config":
-      case "-c":
+      case "-c": {
         parsed.config = true;
-        if (args[i + 1] && !args[i + 1].startsWith("--")) {
-          parsed.configPath = args[++i];
+        const nextConfigArg = args[i + 1];
+        if (nextConfigArg && !nextConfigArg.startsWith("--")) {
+          parsed.configPath = nextConfigArg;
+          i++;
         }
         break;
+      }
       case "--chats":
         parsed.chats = true;
         break;
@@ -57,11 +60,14 @@ export function parseArgs(args: string[]): CliArgs {
       case "-v":
         parsed.version = true;
         break;
-      case "--log-level":
-        if (args[i + 1] && !args[i + 1].startsWith("--")) {
-          parsed.logLevel = args[++i];
+      case "--log-level": {
+        const nextLogLevelArg = args[i + 1];
+        if (nextLogLevelArg && !nextLogLevelArg.startsWith("--")) {
+          parsed.logLevel = nextLogLevelArg;
+          i++;
         }
         break;
+      }
     }
   }
 
@@ -121,7 +127,7 @@ export function showAbout(packageInfo: PackageInfo): void {
 ║  Author:         ${packageInfo.author.padEnd(40)}║
 ║  License:        ${packageInfo.license.padEnd(40)}║
 ║  Homepage:       ${(packageInfo.homepage || "N/A").padEnd(40)}║
-║  Repository:     ${(packageInfo.repository || "N/A").padEnd(40)}║
+║  Repository:     ${((packageInfo.repository ?? "N/A") as string).padEnd(40)}║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║  Features:                                                   ║

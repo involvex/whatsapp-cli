@@ -37,3 +37,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .mira
 test_output.txt
 .whatsapp-cli-config.json
+
+# Local WhatsApp data (now stored in ~/.whatsapp-cli)
+.wwebjs_cache
+.wwebjs_auth_session

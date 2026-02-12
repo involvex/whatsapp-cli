@@ -41,16 +41,19 @@ bun start
 Set the Chrome path for Puppeteer:
 
 **Windows:**
+
 ```powershell
 $env:PUPPETEER_EXECUTABLE_PATH = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 ```
 
 **macOS:**
+
 ```bash
 export PUPPETEER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 ```
 
 **Linux:**
+
 ```bash
 export PUPPETEER_EXECUTABLE_PATH="/usr/bin/google-chrome"
 ```
@@ -88,6 +91,7 @@ export GEMINI_API_KEY=your_key_here
 ```
 
 Supported providers:
+
 - **OpenRouter** - Multi-model support (Claude, GPT, PaLM)
 - **OpenAI** - GPT-3.5, GPT-4 models
 - **Google Gemini** - Gemini AI models

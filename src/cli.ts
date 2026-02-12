@@ -30,7 +30,6 @@ import {
   showAbout,
   showVersion,
   getPackageInfo,
-  type CliArgs,
 } from "./args";
 import type { Chat, Message, Client } from "whatsapp-web.js";
 
@@ -88,6 +87,9 @@ async function displayChats(): Promise<void> {
 }
 
 async function selectChat(rl: ReadlineInterface): Promise<void> {
+  clearScreen();
+  printHeader("Select Chat");
+
   if (state.chats.length === 0) {
     printWarning("No chats to select from");
     return;
@@ -115,10 +117,17 @@ async function selectChat(rl: ReadlineInterface): Promise<void> {
 }
 
 async function sendMessage(rl: ReadlineInterface): Promise<void> {
+  clearScreen();
+  printHeader("Send Message");
+
   if (!state.activeChatId || !state.activeChat) {
     printError("No chat selected. Please select a chat first");
     return;
   }
+
+  const chatName =
+    state.activeChat.name || state.activeChat.id.user || "Unknown";
+  console.log(`Sending to: ${colors.highlight(chatName)}\n`);
 
   const message = await promptUser(rl, colors.highlight("💬 Enter message: "));
 
@@ -151,6 +160,9 @@ async function sendMessage(rl: ReadlineInterface): Promise<void> {
 }
 
 async function showChatHistory(_rl: ReadlineInterface): Promise<void> {
+  clearScreen();
+  printHeader("Chat History");
+
   if (!state.activeChatId || !state.activeChat) {
     printError("No chat selected. Please select a chat first");
     return;
@@ -162,7 +174,9 @@ async function showChatHistory(_rl: ReadlineInterface): Promise<void> {
       return;
     }
 
-    printLoading("Fetching messages...");
+    const chatName =
+      state.activeChat.name || state.activeChat.id.user || "Unknown";
+    printLoading(`Fetching messages from ${chatName}...`);
     const chat = await state.client.getChatById(state.activeChatId);
     const messageLimit = getConfig().messageLimit;
     const messages = await chat.fetchMessages({ limit: messageLimit });
@@ -209,10 +223,10 @@ function toggleAiMode(): void {
   }
 }
 
-async function handleLogout(): Promise<void> {
+async function handleLogout(rl: ReadlineInterface): Promise<void> {
   printWarning("Clear authentication and logout?");
   const confirmation = await promptUser(
-    process.stdin as unknown as ReadlineInterface,
+    rl,
     colors.highlight("Are you sure? (yes/no): "),
   );
 
@@ -225,7 +239,7 @@ async function handleLogout(): Promise<void> {
   }
 }
 
-async function showAbout(): Promise<void> {
+async function showAboutMenu(rl: ReadlineInterface): Promise<void> {
   const packageInfo = await getPackageInfo();
 
   clearScreen();
@@ -258,14 +272,18 @@ async function showAbout(): Promise<void> {
 
   console.log("");
   if (packageInfo.homepage) {
-    console.log(`  ${colors.dim("Homepage:")} ${colors.highlight(packageInfo.homepage)}`);
+    console.log(
+      `  ${colors.dim("Homepage:")} ${colors.highlight(packageInfo.homepage)}`,
+    );
   }
 
   console.log("");
-  console.log(`  ${colors.dim("Built with Claude Code - https://claude.com/claude-code")}`);
+  console.log(
+    `  ${colors.dim("Built with Claude Code - https://claude.com/claude-code")}`,
+  );
 
   console.log("");
-  await promptUser(process.stdin as unknown as ReadlineInterface, "Press Enter to continue...");
+  await promptUser(rl, "Press Enter to continue...");
 }
 
 async function mainLoop(rl: ReadlineInterface): Promise<void> {
@@ -324,7 +342,7 @@ async function mainLoop(rl: ReadlineInterface): Promise<void> {
           await promptUser(rl, "Press Enter to continue...");
           break;
         case "4":
-          await showChatHistory(_rl);
+          await showChatHistory(rl);
           await promptUser(rl, "Press Enter to continue...");
           break;
         case "5":
@@ -335,10 +353,10 @@ async function mainLoop(rl: ReadlineInterface): Promise<void> {
           await showSettingsMenu(rl);
           break;
         case "7":
-          await showAbout();
+          await showAboutMenu(rl);
           break;
         case "8":
-          await handleLogout();
+          await handleLogout(rl);
           break;
         case "9":
           state.isExiting = true;
@@ -431,7 +449,7 @@ async function main(): Promise<void> {
       logger.logMessageEvent(
         msg.id.fromMe ? "sent" : "received",
         msg.from || "unknown",
-        { sender, time, messageLength: messageText.length }
+        { sender, time, messageLength: messageText.length },
       );
 
       // Add to recent messages (keep last 20)
@@ -523,7 +541,7 @@ async function cliEntry(): Promise<void> {
   await main();
 }
 
-cliEntry().catch(async (error) => {
+cliEntry().catch(async error => {
   console.error(`Fatal error: ${error}`);
   await logger.close();
   process.exit(1);
