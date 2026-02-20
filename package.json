@@ -21,8 +21,8 @@
   },
   "private": false,
   "scripts": {
-    "dev": "bun run --watch src/cli.ts",
-    "build": "bun build src/cli.ts --outdir dist --target node",
+    "dev": "bun run --watch src/cli.tsx",
+    "build": "bun build src/cli.tsx --outdir dist --target node",
     "start": "bun run dist/cli.js",
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
@@ -44,10 +44,15 @@
   "dependencies": {
     "@types/puppeteer": "^7.0.4",
     "@types/qrcode-terminal": "^0.12.2",
+    "@types/react": "^19.2.14",
     "chalk": "^5.6.2",
     "dotenv": "^16.3.1",
+    "ink": "^6.7.0",
+    "ink-ansi": "^1.0.0",
+    "ink-text-input": "^6.0.0",
     "puppeteer": "^24.37.2",
     "qrcode-terminal": "^0.12.0",
+    "react": "^19.2.4",
     "whatsapp-web.js": "^1.34.6"
   }
 }
