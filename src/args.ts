@@ -1,3 +1,5 @@
+import pkg from "../package.json";
+
 export interface CliArgs {
   headless: boolean;
   help: boolean;
@@ -174,7 +176,7 @@ export async function getPackageInfo(): Promise<PackageInfo> {
   } catch {
     return {
       name: "whatsapp-cli",
-      version: "1.0.0",
+      version: pkg.version,
       description: "WhatsApp CLI",
       author: "involvex",
       license: "MIT",
