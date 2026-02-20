@@ -12,12 +12,7 @@ import {
 } from "./client";
 import { loadConfig, getConfig } from "./config";
 import { createLogger } from "./logger";
-import {
-  parseArgs,
-  showHelp,
-  getPackageInfo,
-  showVersion,
-} from "./args";
+import { parseArgs, showHelp, getPackageInfo, showVersion } from "./args";
 import type { Chat, Message, Client } from "whatsapp-web.js";
 
 // Initialize logger
@@ -38,7 +33,9 @@ const WhatsAppCLI: React.FC = () => {
   >([]);
   const [client, setClient] = useState<Client | null>(null);
   const [qrCodeString, setQrCodeString] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<"chat" | "about" | "settings">("chat");
+  const [currentView, setCurrentView] = useState<"chat" | "about" | "settings">(
+    "chat",
+  );
 
   const activeChatRef = useRef<Chat | null>(null);
   activeChatRef.current = activeChat;
@@ -48,8 +45,8 @@ const WhatsAppCLI: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       setQrCallback((qr: string) => {
-        qrcode.generate(qr, { small: true }, (code) => {
-            setQrCodeString(code);
+        qrcode.generate(qr, { small: true }, code => {
+          setQrCodeString(code);
         });
         logger.logClientEvent("qr", { qrLength: qr.length });
       });
@@ -78,14 +75,18 @@ const WhatsAppCLI: React.FC = () => {
 
         // Only append to UI if it's from/to the active chat
         const currentActive = activeChatRef.current;
-        if (currentActive && (msg.from === currentActive.id._serialized || (msg.id.fromMe && msg.to === currentActive.id._serialized))) {
-            setRecentMessages(prev => {
-                const newMessages = [
-                    ...prev,
-                    { sender, message: messageText, time, fromMe: msg.id.fromMe },
-                ];
-                return newMessages.slice(-20);
-            });
+        if (
+          currentActive &&
+          (msg.from === currentActive.id._serialized ||
+            (msg.id.fromMe && msg.to === currentActive.id._serialized))
+        ) {
+          setRecentMessages(prev => {
+            const newMessages = [
+              ...prev,
+              { sender, message: messageText, time, fromMe: msg.id.fromMe },
+            ];
+            return newMessages.slice(-20);
+          });
         }
       });
 
@@ -108,14 +109,19 @@ const WhatsAppCLI: React.FC = () => {
       if (client && activeChat) {
         try {
           const chat = await client.getChatById(activeChat.id._serialized);
-          const messages = await chat.fetchMessages({ limit: config.messageLimit || 15 });
+          const messages = await chat.fetchMessages({
+            limit: config.messageLimit || 15,
+          });
 
-          setRecentMessages(messages.map((msg: Message) => ({
-            sender: msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
-            message: msg.body || "[Media/Sticker]",
-            time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
-            fromMe: msg.id.fromMe
-          })));
+          setRecentMessages(
+            messages.map((msg: Message) => ({
+              sender:
+                msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
+              message: msg.body || "[Media/Sticker]",
+              time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
+              fromMe: msg.id.fromMe,
+            })),
+          );
         } catch (error) {
           logger.error("Failed to fetch history", { error });
         }
@@ -140,17 +146,22 @@ const WhatsAppCLI: React.FC = () => {
           }
           break;
         case "4": // Force refresh history
-           if (client && activeChat) {
-                const chat = await client.getChatById(activeChat.id._serialized);
-                const messages = await chat.fetchMessages({ limit: config.messageLimit || 15 });
-                setRecentMessages(messages.map((msg: Message) => ({
-                    sender: msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
-                    message: msg.body || "[Media/Sticker]",
-                    time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
-                    fromMe: msg.id.fromMe
-                })));
-           }
-           break;
+          if (client && activeChat) {
+            const chat = await client.getChatById(activeChat.id._serialized);
+            const messages = await chat.fetchMessages({
+              limit: config.messageLimit || 15,
+            });
+            setRecentMessages(
+              messages.map((msg: Message) => ({
+                sender:
+                  msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
+                message: msg.body || "[Media/Sticker]",
+                time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
+                fromMe: msg.id.fromMe,
+              })),
+            );
+          }
+          break;
         case "5": // Toggle AI
           setAiEnabled(prev => !prev);
           break;

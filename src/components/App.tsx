@@ -41,7 +41,9 @@ export const App: React.FC<AppProps> = ({
   currentView = "chat",
 }) => {
   const { exit } = useApp();
-  const [inputMode, setInputMode] = useState<"command" | "message" | "chat-select">("command");
+  const [inputMode, setInputMode] = useState<
+    "command" | "message" | "chat-select"
+  >("command");
   const [inputValue, setInputValue] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
 
@@ -62,7 +64,9 @@ export const App: React.FC<AppProps> = ({
           } else {
             setInputMode("message");
             setInputValue("");
-            setStatusMessage(`Type message to ${activeChat.name || "selected chat"}`);
+            setStatusMessage(
+              `Type message to ${activeChat.name || "selected chat"}`,
+            );
           }
         } else {
           onCommand(input);
@@ -113,7 +117,9 @@ export const App: React.FC<AppProps> = ({
           isConnected={isConnected}
         />
         <MainContent
-          activeChatName={activeChat ? (activeChat.name || activeChat.id.user) : null}
+          activeChatName={
+            activeChat ? activeChat.name || activeChat.id.user : null
+          }
           messages={recentMessages}
           menuOptions={menuOptions}
           qrCode={qrCode}
@@ -124,7 +130,9 @@ export const App: React.FC<AppProps> = ({
         <Box paddingX={1} borderStyle="single" borderColor="yellow">
           <Box marginRight={1}>
             <Text bold color="yellow">
-              {inputMode === "command" ? "Command: " : `${inputMode.charAt(0).toUpperCase() + inputMode.slice(1)}: `}
+              {inputMode === "command"
+                ? "Command: "
+                : `${inputMode.charAt(0).toUpperCase() + inputMode.slice(1)}: `}
             </Text>
           </Box>
           {inputMode === "command" ? (
