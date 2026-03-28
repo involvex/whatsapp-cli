@@ -6,6 +6,8 @@ interface FooterProps {
   aiProvider: string;
   aiModel: string;
   lastMessage?: string;
+  inputMode?: "command" | "message" | "chat-select";
+  sidebarCursor?: number;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -13,20 +15,33 @@ export const Footer: React.FC<FooterProps> = ({
   aiProvider,
   aiModel,
   lastMessage,
+  inputMode = "command",
+  sidebarCursor = -1,
 }) => {
+  const getHelpText = (): string => {
+    if (lastMessage) return lastMessage;
+    if (inputMode === "message") return "Type message  ↵ send  Esc cancel";
+    if (inputMode === "chat-select")
+      return "Type number  ↵ confirm  Esc cancel";
+    if (sidebarCursor >= 0) return "↑↓ navigate  ↵ open chat  Esc cancel";
+    return "[1-8] commands  [↑↓] navigate chats  [Q] quit";
+  };
+
   return (
-    <Box borderStyle="single" borderColor="dim" paddingX={1} width="100%">
+    <Box borderStyle="single" borderColor="gray" paddingX={1} width="100%">
       <Box flexGrow={1}>
+        <Text dimColor>{getHelpText()}</Text>
+      </Box>
+      <Text dimColor> │ </Text>
+      <Text bold color={aiEnabled ? "magenta" : "gray"}>
+        AI {aiEnabled ? "●" : "○"}
+      </Text>
+      {aiEnabled && (
         <Text dimColor>
-          {lastMessage || "Use numbers 1-9 to navigate | Press Q to exit"}
+          {" "}
+          {aiProvider}/{aiModel}
         </Text>
-      </Box>
-      <Box>
-        <Text>AI: </Text>
-        <Text color={aiEnabled ? "magenta" : "gray"}>
-          {aiEnabled ? `ON (${aiProvider}/${aiModel})` : "OFF"}
-        </Text>
-      </Box>
+      )}
     </Box>
   );
 };

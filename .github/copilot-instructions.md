@@ -33,6 +33,7 @@ src/
 ```
 
 **Data flow:**
+
 1. `cli.tsx` bootstraps the singleton client via `initializeClient()` from `client.ts`, registering callbacks (QR, ready, message, error) before calling `initializeClient()`.
 2. The `WhatsAppCLI` React component holds all application state (`chats`, `activeChat`, `isConnected`, `recentMessages`, `currentView`).
 3. `App.tsx` handles raw keyboard input via Ink's `useInput` hook and delegates to `onCommand`, `onSendMessage`, `onSelectChat` callbacks.
@@ -60,13 +61,13 @@ src/
 
 ## Environment Variables
 
-| Variable | Purpose |
-|---|---|
-| `PUPPETEER_EXECUTABLE_PATH` | Path to Chrome/Chromium executable |
-| `OPENROUTER_API_KEY` | OpenRouter API key |
-| `OPENAI_API_KEY` | OpenAI API key |
-| `GEMINI_API_KEY` | Google Gemini API key |
-| `WHATSAPP_CLI_DIR` | Override `~/.whatsapp-cli` data directory |
+| Variable                    | Purpose                                   |
+| --------------------------- | ----------------------------------------- |
+| `PUPPETEER_EXECUTABLE_PATH` | Path to Chrome/Chromium executable        |
+| `OPENROUTER_API_KEY`        | OpenRouter API key                        |
+| `OPENAI_API_KEY`            | OpenAI API key                            |
+| `GEMINI_API_KEY`            | Google Gemini API key                     |
+| `WHATSAPP_CLI_DIR`          | Override `~/.whatsapp-cli` data directory |
 
 ## Custom Agent
 

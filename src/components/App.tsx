@@ -46,26 +46,60 @@ export const App: React.FC<AppProps> = ({
   >("command");
   const [inputValue, setInputValue] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [sidebarCursor, setSidebarCursor] = useState(-1);
 
   useInput((input, key) => {
     if (inputMode === "command") {
+      // ── Arrow-key sidebar navigation ────────────────────────────────────
+      if (key.upArrow) {
+        const max = Math.min(initialChats.length - 1, 14);
+        if (max >= 0) {
+          setStatusMessage("");
+          setSidebarCursor(prev => (prev <= 0 ? max : prev - 1));
+        }
+        return;
+      }
+      if (key.downArrow) {
+        const max = Math.min(initialChats.length - 1, 14);
+        if (max >= 0) {
+          setStatusMessage("");
+          setSidebarCursor(prev => (prev < 0 ? 0 : prev >= max ? 0 : prev + 1));
+        }
+        return;
+      }
+      // Enter confirms cursor selection
+      if (key.return && sidebarCursor >= 0) {
+        onSelectChat(sidebarCursor + 1);
+        setSidebarCursor(-1);
+        setStatusMessage("");
+        return;
+      }
+      // Escape clears cursor
+      if (key.escape) {
+        setSidebarCursor(-1);
+        setStatusMessage("");
+        return;
+      }
+
+      // ── Number / letter commands ─────────────────────────────────────────
       if (input === "q" || input === "9") {
         exit();
         process.exit(0);
       }
       if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(input)) {
+        setSidebarCursor(-1);
         if (input === "2") {
           setInputMode("chat-select");
           setInputValue("");
           setStatusMessage("Enter chat number to select");
         } else if (input === "3") {
           if (!activeChat) {
-            setStatusMessage("⚠️ Please select a chat first (option 2)");
+            setStatusMessage("⚠  Select a chat first — use ↑↓ or [2]");
           } else {
             setInputMode("message");
             setInputValue("");
             setStatusMessage(
-              `Type message to ${activeChat.name || "selected chat"}`,
+              `Sending to: ${activeChat.name || "selected chat"}`,
             );
           }
         } else {
@@ -87,6 +121,7 @@ export const App: React.FC<AppProps> = ({
       }
       setInputMode("command");
       setInputValue("");
+      setSidebarCursor(-1);
     } else if (inputMode === "message") {
       if (value.trim()) {
         onSendMessage(value);
@@ -105,8 +140,18 @@ export const App: React.FC<AppProps> = ({
     { num: "6", text: "Settings" },
     { num: "7", text: "About" },
     { num: "8", text: "Logout" },
-    { num: "9", text: "Exit" },
+    { num: "Q", text: "Exit" },
   ];
+
+  // Resolve input bar border color based on mode
+  const inputBorderColor =
+    inputMode === "message"
+      ? "cyan"
+      : inputMode === "chat-select"
+        ? "green"
+        : sidebarCursor >= 0
+          ? "yellow"
+          : "gray";
 
   return (
     <Box flexDirection="column" width="100%" height="100%">
@@ -115,6 +160,7 @@ export const App: React.FC<AppProps> = ({
           chats={initialChats}
           activeChatId={activeChat?.id._serialized || null}
           isConnected={isConnected}
+          cursorIndex={sidebarCursor}
         />
         <MainContent
           activeChatName={
@@ -127,16 +173,27 @@ export const App: React.FC<AppProps> = ({
         />
       </Box>
       {!qrCode && (
-        <Box paddingX={1} borderStyle="single" borderColor="yellow">
+        <Box paddingX={1} borderStyle="single" borderColor={inputBorderColor}>
           <Box marginRight={1}>
-            <Text bold color="yellow">
+            <Text
+              bold
+              color={inputBorderColor === "gray" ? "yellow" : inputBorderColor}
+            >
               {inputMode === "command"
-                ? "Command: "
-                : `${inputMode.charAt(0).toUpperCase() + inputMode.slice(1)}: `}
+                ? sidebarCursor >= 0
+                  ? "NAV "
+                  : "CMD "
+                : inputMode === "message"
+                  ? "MSG "
+                  : "SEL "}
             </Text>
           </Box>
           {inputMode === "command" ? (
-            <Text dimColor>1-8 to act, 9/Q to exit</Text>
+            <Text dimColor>
+              {sidebarCursor >= 0
+                ? `Chat ${sidebarCursor + 1} selected — ↵ open  Esc cancel`
+                : "[1-8] act  [↑↓] navigate  [Q] exit"}
+            </Text>
           ) : (
             <TextInput
               value={inputValue}
@@ -151,6 +208,8 @@ export const App: React.FC<AppProps> = ({
         aiProvider={aiProvider}
         aiModel={aiModel}
         lastMessage={statusMessage}
+        inputMode={inputMode}
+        sidebarCursor={sidebarCursor}
       />
     </Box>
   );
