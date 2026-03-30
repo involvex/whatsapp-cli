@@ -32,12 +32,12 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/bun": "latest",
-    "eslint": "^10.0.0",
-    "globals": "^17.3.0",
+    "@types/bun": "1.3.11",
+    "eslint": "^10.1.0",
+    "globals": "^17.4.0",
     "prettier": "^3.8.1",
     "react-devtools-core": "^7.0.1",
-    "typescript-eslint": "^8.55.0"
+    "typescript-eslint": "^8.57.2"
   },
   "peerDependencies": {
     "typescript": "^5.9.3"
@@ -48,10 +48,10 @@
     "@types/react": "^19.2.14",
     "chalk": "^5.6.2",
     "dotenv": "^16.3.1",
-    "ink": "^6.7.0",
+    "ink": "^6.8.0",
     "ink-ansi": "^1.0.0",
     "ink-text-input": "^6.0.0",
-    "puppeteer": "^24.37.2",
+    "puppeteer": "^24.40.0",
     "qrcode-terminal": "^0.12.0",
     "react": "^19.2.4",
     "whatsapp-web.js": "^1.34.6"
