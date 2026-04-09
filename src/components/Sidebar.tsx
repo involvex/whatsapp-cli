@@ -18,7 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const visibleChats = chats.slice(0, 15);
   const borderColor = !isConnected
     ? "red"
-    : cursorIndex >= 0
+    : visibleChats.length > 0
       ? "yellow"
       : "cyan";
 
@@ -101,10 +101,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </Box>
       )}
 
-      {/* Navigation hint when cursor is active */}
-      {cursorIndex >= 0 && (
+      {/* Navigation hint */}
+      {visibleChats.length > 0 && (
         <Box marginTop={1}>
-          <Text dimColor>↑↓ move ↵ open Esc quit</Text>
+          <Text dimColor>↑↓ move ↵ open ⇧↵ type</Text>
         </Box>
       )}
     </Box>

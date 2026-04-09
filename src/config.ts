@@ -40,6 +40,7 @@ export interface CliConfig {
   autoReconnect: boolean;
   logging: LoggingConfig;
   chatHistoryEnabled: boolean;
+  soundEnabled: boolean;
 }
 
 const DEFAULT_CONFIG: CliConfig = {
@@ -62,6 +63,7 @@ const DEFAULT_CONFIG: CliConfig = {
     colors: true,
   },
   chatHistoryEnabled: true,
+  soundEnabled: true,
 };
 
 const AVAILABLE_MODELS: Record<string, string[]> = {

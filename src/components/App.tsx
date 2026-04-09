@@ -46,7 +46,7 @@ export const App: React.FC<AppProps> = ({
   >("command");
   const [inputValue, setInputValue] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
-  const [sidebarCursor, setSidebarCursor] = useState(-1);
+  const [sidebarCursor, setSidebarCursor] = useState(0);
 
   useInput((input, key) => {
     if (inputMode === "command") {
@@ -63,20 +63,24 @@ export const App: React.FC<AppProps> = ({
         const max = Math.min(initialChats.length - 1, 14);
         if (max >= 0) {
           setStatusMessage("");
-          setSidebarCursor(prev => (prev < 0 ? 0 : prev >= max ? 0 : prev + 1));
+          setSidebarCursor(prev => (prev >= max ? 0 : prev + 1));
+        }
+        return;
+      }
+      // Shift+Enter → jump into message input for the active chat
+      if (key.shift && key.return) {
+        if (!activeChat) {
+          setStatusMessage("⚠  Open a chat first — press ↵");
+        } else {
+          setInputMode("message");
+          setInputValue("");
+          setStatusMessage(`Sending to: ${activeChat.name || "selected chat"}`);
         }
         return;
       }
       // Enter confirms cursor selection
-      if (key.return && sidebarCursor >= 0) {
+      if (key.return && initialChats.length > 0) {
         onSelectChat(sidebarCursor + 1);
-        setSidebarCursor(-1);
-        setStatusMessage("");
-        return;
-      }
-      // Escape clears cursor
-      if (key.escape) {
-        setSidebarCursor(-1);
         setStatusMessage("");
         return;
       }
@@ -87,14 +91,13 @@ export const App: React.FC<AppProps> = ({
         process.exit(0);
       }
       if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(input)) {
-        setSidebarCursor(-1);
         if (input === "2") {
           setInputMode("chat-select");
           setInputValue("");
           setStatusMessage("Enter chat number to select");
         } else if (input === "3") {
           if (!activeChat) {
-            setStatusMessage("⚠  Select a chat first — use ↑↓ or [2]");
+            setStatusMessage("⚠  Open a chat first — press ↵");
           } else {
             setInputMode("message");
             setInputValue("");
@@ -110,6 +113,13 @@ export const App: React.FC<AppProps> = ({
       setInputMode("command");
       setInputValue("");
       setStatusMessage("");
+      // Restore cursor to active chat position if possible
+      if (activeChat) {
+        const idx = initialChats.findIndex(
+          c => c.id._serialized === activeChat.id._serialized,
+        );
+        if (idx >= 0) setSidebarCursor(idx);
+      }
     }
   });
 
@@ -121,7 +131,6 @@ export const App: React.FC<AppProps> = ({
       }
       setInputMode("command");
       setInputValue("");
-      setSidebarCursor(-1);
     } else if (inputMode === "message") {
       if (value.trim()) {
         onSendMessage(value);
@@ -149,7 +158,7 @@ export const App: React.FC<AppProps> = ({
       ? "cyan"
       : inputMode === "chat-select"
         ? "green"
-        : sidebarCursor >= 0
+        : initialChats.length > 0
           ? "yellow"
           : "gray";
 
@@ -180,9 +189,7 @@ export const App: React.FC<AppProps> = ({
               color={inputBorderColor === "gray" ? "yellow" : inputBorderColor}
             >
               {inputMode === "command"
-                ? sidebarCursor >= 0
-                  ? "NAV "
-                  : "CMD "
+                ? "NAV "
                 : inputMode === "message"
                   ? "MSG "
                   : "SEL "}
@@ -190,9 +197,9 @@ export const App: React.FC<AppProps> = ({
           </Box>
           {inputMode === "command" ? (
             <Text dimColor>
-              {sidebarCursor >= 0
-                ? `Chat ${sidebarCursor + 1} selected — ↵ open  Esc cancel`
-                : "[1-8] act  [↑↓] navigate  [Q] exit"}
+              {initialChats.length > 0
+                ? `Chat ${sidebarCursor + 1} — ↑↓ nav  ↵ open  ⇧↵ type  [1-8] act  Q exit`
+                : "[1-8] act  Q exit"}
             </Text>
           ) : (
             <TextInput

@@ -172,6 +172,11 @@ export const MainContent: React.FC<MainContentProps> = ({
             value={config.chatHistoryEnabled ? "Enabled" : "Disabled"}
             valueColor={config.chatHistoryEnabled ? "green" : "red"}
           />
+          <SettingRow
+            label="Sound Notifications"
+            value={config.soundEnabled ? "Enabled" : "Disabled"}
+            valueColor={config.soundEnabled ? "green" : "red"}
+          />
         </Box>
         <Box marginTop={1}>
           <Text dimColor>Edit config.json to change settings.</Text>
@@ -261,6 +266,7 @@ export const MainContent: React.FC<MainContentProps> = ({
             <Box marginTop={1} flexDirection="column">
               <Text dimColor> ↑↓ Navigate the chat list</Text>
               <Text dimColor> ↵ Open highlighted chat</Text>
+              <Text dimColor> ⇧↵ Start typing a message</Text>
               <Text dimColor> [2] Enter chat number directly</Text>
             </Box>
           </Box>

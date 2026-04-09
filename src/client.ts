@@ -14,6 +14,7 @@ let messageCallback: ((message: Message) => void) | null = null;
 let readyCallback: ((client: Client) => void) | null = null;
 let errorCallback: ((error: Error) => void) | null = null;
 let connectionAttempts = 0;
+let isLoggingOut = false;
 const MAX_RETRY_ATTEMPTS = 3;
 
 export function setQrCallback(callback: (qr: string) => void) {
@@ -154,6 +155,8 @@ export async function initializeClient(): Promise<Client> {
         clientInstance = null;
         initPromise = null;
 
+        if (isLoggingOut) return;
+
         if (connectionAttempts < MAX_RETRY_ATTEMPTS) {
           connectionAttempts++;
           logger.info(
@@ -229,23 +232,32 @@ export async function initializeClient(): Promise<Client> {
 
 export async function clearAuthSession(): Promise<void> {
   logger.logAction("clear_auth_session");
+  isLoggingOut = true;
   try {
     if (clientInstance) {
-      await clientInstance.logout();
-      logger.info("Logged out successfully");
-      console.log("✓ Logged out successfully");
+      const instance = clientInstance;
+      clientInstance = null;
+      initPromise = null;
+      try {
+        await instance.logout();
+        logger.info("Logged out successfully");
+        console.log("✓ Logged out successfully");
+      } catch {
+        logger.debug("Browser closed during logout (expected)");
+      }
+    } else {
+      clientInstance = null;
+      initPromise = null;
     }
 
-    const authPath = PATHS.auth;
-    await fs.rm(authPath, { recursive: true, force: true });
+    await fs.rm(PATHS.auth, { recursive: true, force: true });
     logger.info("Authentication session cleared");
     console.log("✓ Authentication session cleared");
-
-    clientInstance = null;
-    initPromise = null;
   } catch (error) {
     logger.error("Error clearing session", { error });
     console.error("Error clearing session:", error);
+  } finally {
+    isLoggingOut = false;
   }
 }
 

@@ -88,6 +88,13 @@ const WhatsAppCLI: React.FC = () => {
             return newMessages.slice(-20);
           });
         }
+
+        // Notification sound for incoming messages
+        if (!msg.id.fromMe && getConfig().soundEnabled) {
+          const isActiveChat =
+            currentActive && msg.from === currentActive.id._serialized;
+          process.stdout.write(isActiveChat ? "\x07" : "\x07\x07");
+        }
       });
 
       setErrorCallback((error: Error) => {
@@ -106,7 +113,7 @@ const WhatsAppCLI: React.FC = () => {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      if (client && activeChat) {
+      if (client && activeChat && isConnected) {
         try {
           const chat = await client.getChatById(activeChat.id._serialized);
           const messages = await chat.fetchMessages({
@@ -129,7 +136,7 @@ const WhatsAppCLI: React.FC = () => {
     };
 
     fetchHistory();
-  }, [client, activeChat, config.messageLimit]);
+  }, [client, activeChat, isConnected, config.messageLimit]);
 
   const handleCommand = useCallback(
     async (cmd: string) => {
@@ -172,7 +179,11 @@ const WhatsAppCLI: React.FC = () => {
           setCurrentView("about");
           break;
         case "8": // Logout
-          await clearAuthSession();
+          try {
+            await clearAuthSession();
+          } catch {
+            // browser already closed; auth files cleaned up as far as possible
+          }
           process.exit(0);
           break;
       }
