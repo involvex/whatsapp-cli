@@ -41,3 +41,5 @@ test_output.txt
 # Local WhatsApp data (now stored in ~/.whatsapp-cli)
 .wwebjs_cache
 .wwebjs_auth_session
+
+.tmp-auth

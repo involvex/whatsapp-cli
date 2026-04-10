@@ -1,3 +1,10 @@
+## [0.0.5](https://github.com/involvex/whatsapp-cli/compare/v0.0.4...v0.0.5) (2026-04-10)
+
+### Fixed
+
+- improve CLI startup by resolving local browser executables before falling back to Puppeteer's managed cache
+- surface clearer Chrome/Puppeteer setup guidance for local, linked, and first-run CLI usage
+
 ## [0.0.4](https://github.com/involvex/whatsapp-cli/compare/v0.0.3...v0.0.4) (2026-03-30)
 
 ## [0.0.3](https://github.com/involvex/whatsapp-cli/compare/v0.0.2...v0.0.3) (2026-02-20)

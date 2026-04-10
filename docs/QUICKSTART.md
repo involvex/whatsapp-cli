@@ -12,13 +12,25 @@ cd whatsappwebtui
 bun install
 ```
 
-## Configuration (Windows Only)
+## Browser Setup
 
-Edit `src/client.ts` line 6:
+The CLI auto-detects browsers in this order:
 
-```typescript
-process.env.PUPPETEER_EXECUTABLE_PATH =
-  "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+1. `PUPPETEER_EXECUTABLE_PATH`
+2. `BUN_CHROME_PATH`
+3. Standard Chrome/Chromium/Edge install locations
+4. Puppeteer's managed browser cache
+
+If you want to pin the browser explicitly on Windows:
+
+```powershell
+$env:PUPPETEER_EXECUTABLE_PATH = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+```
+
+If you do not have a local browser install, download Puppeteer's managed Chrome once:
+
+```bash
+bunx puppeteer browsers install chrome
 ```
 
 ## Running
@@ -51,8 +63,9 @@ bun run start
   4. Show chat history   - Display last 15 messages
   5. Toggle AI mode      - Enable/disable AI generation
   6. Settings            - Configure AI, theme, models
-  7. Logout & reset      - Clear auth token
-  8. Exit                - Close application
+  7. About               - Show app information
+  8. Logout & reset      - Clear auth token
+  Q. Exit                - Close application
 
 📬 Recent Messages - Shows last 5 messages on every screen
 ```
@@ -80,8 +93,8 @@ bun run start
 ### 💾 Session Persistence
 
 - Login once, use forever
-- Delete `.wwebjs_auth_session/` to re-authenticate
-- Use Option 7 to logout cleanly
+- Session data is stored under `~/.whatsapp-cli/auth/`
+- Use Option 8 to logout cleanly
 
 ## File Structure
 
@@ -96,7 +109,7 @@ src/
 └── ai-provider.ts      # (Future) AI message generation
 
 Config:
-└── .whatsapp-cli-config.json  # Settings file (auto-created)
+└── ~/.whatsapp-cli/config.json  # Settings file (auto-created)
 ```
 
 ## Key Features
@@ -129,13 +142,19 @@ Send messages → AI enhances them!
 
 **Chrome not found?**
 
-- Update path in `src/client.ts` line 6
-- Verify Chrome is installed: `where chrome` (Windows)
+- Set `PUPPETEER_EXECUTABLE_PATH` to a valid browser executable
+- Or install Puppeteer's managed browser: `bunx puppeteer browsers install chrome`
+- Verify Chrome/Chromium/Edge is installed: `where chrome` or `where msedge` (Windows)
+
+**DEP0040 warning?**
+
+- This warning comes from the current `whatsapp-web.js` dependency chain on newer Node versions
+- The CLI filters the noisy startup warning, but the upstream dependency chain still needs modernization
 
 **No chats showing?**
 
 - Wait 10-20 seconds after QR scan
-- Delete `.wwebjs_auth_session/` folder
+- Delete `~/.whatsapp-cli/auth/`
 - Scan QR code again
 
 **Exit doesn't work?**
@@ -156,8 +175,8 @@ Send messages → AI enhances them!
 
 **Settings not saving?**
 
-- Check if `.whatsapp-cli-config.json` is writable
-- Try resetting: Settings → Option 7
+- Check if `~/.whatsapp-cli/config.json` is writable
+- Try resetting: Settings → Option 8
 - Edit file manually if needed
 
 ## Scripts

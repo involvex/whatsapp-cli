@@ -11,7 +11,7 @@ The WhatsApp CLI now supports persistent authentication sessions. Your login cre
 ```
 1. Start the app → "ℹ No existing session found - will require QR code scan"
 2. QR code displays → Scan with WhatsApp on phone
-3. Session saved to `.wwebjs_auth_session/` directory
+3. Session saved under `~/.whatsapp-cli/auth/`
 4. CLI starts normally
 ```
 
@@ -26,7 +26,7 @@ The WhatsApp CLI now supports persistent authentication sessions. Your login cre
 
 ## Session Storage
 
-- **Location**: `.wwebjs_auth_session/` directory (auto-created)
+- **Location**: `~/.whatsapp-cli/auth/` directory (auto-created)
 - **Contents**: WhatsApp Web session data and authentication tokens
 - **Size**: ~5-10MB
 - **Lifetime**: Session persists until manually logged out
@@ -42,7 +42,7 @@ When you start the app, it will display:
 
 ### Logout & Clear Session
 
-From the main menu, select **Option 6: Logout & reset**
+From the main menu, select **Option 8: Logout & reset**
 
 ```
 ⚠️  Clear authentication and logout? (yes/no): yes
@@ -63,10 +63,10 @@ If the app won't start or session is corrupted:
 
 ```bash
 # Windows
-Remove-Item -Path .wwebjs_auth_session -Recurse -Force
+Remove-Item -Path "$HOME\.whatsapp-cli\auth" -Recurse -Force
 
 # macOS/Linux
-rm -rf .wwebjs_auth_session
+rm -rf ~/.whatsapp-cli/auth
 ```
 
 Then restart the app to re-authenticate.
@@ -87,10 +87,10 @@ Then restart the app to re-authenticate.
 
 **Solutions**:
 
-1. Check if `.wwebjs_auth_session/` folder exists
+1. Check if `~/.whatsapp-cli/auth/` exists
 2. Ensure app has write permissions in the directory
 3. Check disk space availability (~10MB required)
-4. Try manual logout (Option 6) then restart
+4. Try manual logout (Option 8) then restart
 
 ### "Session Expired" Error
 
@@ -98,7 +98,7 @@ Then restart the app to re-authenticate.
 
 **Solutions**:
 
-1. Use Option 6 to logout and clear
+1. Use Option 8 to logout and clear
 2. Restart app and scan QR code again
 3. This happens after ~30 days of inactivity
 
@@ -113,19 +113,14 @@ Then restart the app to re-authenticate.
 ⚠️ **Important Security Notes**:
 
 1. **Session Token**: The saved token can be used to access your WhatsApp
-2. **File Permissions**: Protect the `.wwebjs_auth_session/` directory
+2. **File Permissions**: Protect the `~/.whatsapp-cli/auth/` directory
 3. **Sharing**: Don't share or commit this folder to version control
 4. **Cleanup**: Delete the folder if you stop using the app
 
 ## Environment
 
-The `.wwebjs_auth_session` directory is already in `.gitignore`:
-
-```
-.wwebjs_auth_session/
-```
-
-This ensures your session won't be accidentally committed to version control.
+The runtime session data is stored outside the repo by default, under `~/.whatsapp-cli/auth/`.
+If you override `WHATSAPP_CLI_DIR` into the repo, make sure the auth directory stays ignored.
 
 ## Implementation Details
 
@@ -133,7 +128,7 @@ This ensures your session won't be accidentally committed to version control.
 
 ```typescript
 // Check if session already exists - if so, reuse it
-const authPath = path.resolve("./.wwebjs_auth_session");
+const authPath = PATHS.auth;
 const sessionExists = await fs
   .access(authPath)
   .then(() => true)
@@ -151,8 +146,7 @@ export async function clearAuthSession(): Promise<void> {
   if (clientInstance) {
     await clientInstance.logout();
   }
-  const authPath = path.resolve("./.wwebjs_auth_session");
-  await fs.rm(authPath, { recursive: true, force: true });
+  await fs.rm(PATHS.auth, { recursive: true, force: true });
   clientInstance = null;
   initPromise = null;
 }
@@ -177,7 +171,7 @@ async function handleLogout(): Promise<void> {
 ## Best Practices
 
 1. **Save your session** - Your token is only valid for ~30 days
-2. **Logout on shared computers** - Always use Option 6 before leaving
+2. **Logout on shared computers** - Always use Option 8 before leaving
 3. **Regular restarts** - Restart app monthly to refresh token
 4. **Monitor disk space** - Session folder uses minimal space (~10MB)
 5. **Keep app updated** - Update regularly for security patches

@@ -101,7 +101,8 @@ EXAMPLES:
   whatsapp-cli --log-level debug  Enable debug logging
 
 ENVIRONMENT VARIABLES:
-  PUPPETEER_EXECUTABLE_PATH    Path to Chrome executable
+  PUPPETEER_EXECUTABLE_PATH    Optional path to Chrome/Chromium executable
+  BUN_CHROME_PATH              Optional fallback path to Chrome/Chromium executable
   OPENROUTER_API_KEY           OpenRouter API key
   OPENAI_API_KEY               OpenAI API key
   GEMINI_API_KEY               Google Gemini API key
