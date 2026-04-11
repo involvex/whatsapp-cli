@@ -24,6 +24,30 @@ const DEFAULT_PUPPETEER_CACHE_DIR = path.join(
   "puppeteer",
 );
 
+async function cleanupStaleBrowserSessions(): Promise<boolean> {
+  const sessionDir = path.join(PATHS.auth, "session");
+  const staleFiles = ["lockfile", "SingletonSocket", "ChromeDebugging"];
+  let cleaned = false;
+
+  try {
+    await fs.access(sessionDir);
+  } catch {
+    return false;
+  }
+
+  for (const file of staleFiles) {
+    const filePath = path.join(sessionDir, file);
+    try {
+      await fs.rm(filePath, { force: true });
+      cleaned = true;
+    } catch {
+      // File doesn't exist or can't be removed
+    }
+  }
+
+  return cleaned;
+}
+
 type BrowserResolutionSource =
   | "PUPPETEER_EXECUTABLE_PATH"
   | "BUN_CHROME_PATH"
@@ -410,6 +434,13 @@ export function getClientInstance(): Client | null {
 
 export async function initializeClient(): Promise<Client> {
   logger.logAction("initialize_client_start", { connectionAttempts });
+
+  // Clean up stale browser sessions before initializing
+  const cleaned = await cleanupStaleBrowserSessions();
+  if (cleaned) {
+    logger.info("Cleaned up stale browser session files");
+    console.log("⚠ Cleaned up stale browser session files");
+  }
 
   // Return existing promise if initialization is in progress
   if (initPromise) {

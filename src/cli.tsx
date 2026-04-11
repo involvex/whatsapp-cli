@@ -13,15 +13,32 @@ import {
 import { loadConfig, getConfig } from "./config";
 import { createLogger } from "./logger";
 import { parseArgs, showHelp, getPackageInfo, showVersion } from "./args";
+import {
+  loadChatHistory,
+  saveChatHistory,
+  messageToPersisted,
+  chatToPersistedChat,
+  type PersistedChat,
+} from "./chatPersistence";
 import type { Chat, Message, Client } from "whatsapp-web.js";
+
+type ConnectionStatus =
+  | "disconnected"
+  | "connecting"
+  | "ready"
+  | "loading_history";
 
 // Initialize logger
 const logger = createLogger({ console: false, file: false });
 
 const WhatsAppCLI: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>([]);
+  const [persistedChats, setPersistedChats] = useState<PersistedChat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>("disconnected");
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [recentMessages, setRecentMessages] = useState<
     Array<{
@@ -42,9 +59,23 @@ const WhatsAppCLI: React.FC = () => {
 
   const config = getConfig();
 
+  // Load persisted chat history on mount
+  useEffect(() => {
+    const loadPersisted = async () => {
+      const loaded = await loadChatHistory();
+      if (loaded.length > 0) {
+        setPersistedChats(loaded);
+        console.log(`✓ Loaded ${loaded.length} chats from previous session`);
+      }
+    };
+    loadPersisted();
+  }, []);
+
   useEffect(() => {
     const init = async () => {
+      setConnectionStatus("connecting");
       setQrCallback((qr: string) => {
+        setConnectionStatus("connecting");
         qrcode.generate(qr, { small: true }, code => {
           setQrCodeString(code);
         });
@@ -54,15 +85,22 @@ const WhatsAppCLI: React.FC = () => {
       setReadyCallback(async (readyClient: Client) => {
         setClient(readyClient);
         setIsConnected(true);
+        setConnectionStatus("ready");
         setQrCodeString(null);
 
         try {
           const loadedChats = await readyClient.getChats();
-          setChats(
-            loadedChats.sort(
-              (a: Chat, b: Chat) => (b.timestamp || 0) - (a.timestamp || 0),
-            ),
+          const sortedChats = loadedChats.sort(
+            (a: Chat, b: Chat) => (b.timestamp || 0) - (a.timestamp || 0),
           );
+          setChats(sortedChats);
+
+          // Persist chats and messages
+          const persisted: PersistedChat[] =
+            sortedChats.map(chatToPersistedChat);
+          setPersistedChats(persisted);
+          await saveChatHistory(persisted);
+          console.log(`✓ Saved ${persisted.length} chats`);
         } catch (error) {
           logger.error("Failed to load chats", { error });
         }
@@ -72,6 +110,29 @@ const WhatsAppCLI: React.FC = () => {
         const sender = msg.from?.split("@")[0] || "Unknown";
         const time = new Date(msg.timestamp * 1000).toLocaleTimeString();
         const messageText = msg.body || "[Media]";
+
+        // Persist the message
+        const persistedMsg = messageToPersisted(msg);
+        setPersistedChats(prev => {
+          const updated = prev.map(chat => {
+            const chatId = msg.from === chat.id || msg.to === chat.id;
+            if (chatId && chat.messages) {
+              const exists = chat.messages.some(
+                m => m.id === msg.id._serialized,
+              );
+              if (!exists) {
+                return {
+                  ...chat,
+                  messages: [...chat.messages, persistedMsg].slice(-50),
+                };
+              }
+            }
+            return chat;
+          });
+          // Debounce save in background
+          setTimeout(() => saveChatHistory(updated).catch(() => {}), 5000);
+          return updated;
+        });
 
         // Only append to UI if it's from/to the active chat
         const currentActive = activeChatRef.current;
@@ -105,6 +166,7 @@ const WhatsAppCLI: React.FC = () => {
         await initializeClient();
       } catch (error) {
         logger.error("Initialization error", { error });
+        setConnectionStatus("disconnected");
       }
     };
 
@@ -114,6 +176,8 @@ const WhatsAppCLI: React.FC = () => {
   useEffect(() => {
     const fetchHistory = async () => {
       if (client && activeChat && isConnected) {
+        setConnectionStatus("loading_history");
+        setHistoryError(null);
         try {
           const chat = await client.getChatById(activeChat.id._serialized);
           const messages = await chat.fetchMessages({
@@ -129,14 +193,33 @@ const WhatsAppCLI: React.FC = () => {
               fromMe: msg.id.fromMe,
             })),
           );
+          setConnectionStatus("ready");
         } catch (error) {
           logger.error("Failed to fetch history", { error });
+          setHistoryError("Could not load messages from WhatsApp");
+          setConnectionStatus("ready");
+
+          // Fallback to persisted messages for this chat
+          const persistedChat = persistedChats.find(
+            c => c.id === activeChat.id._serialized,
+          );
+          if (persistedChat && persistedChat.messages.length > 0) {
+            console.log("⚠ Using cached messages from previous session");
+            setRecentMessages(
+              persistedChat.messages.slice(-15).map(m => ({
+                sender: m.sender,
+                message: m.message,
+                time: m.time,
+                fromMe: m.fromMe,
+              })),
+            );
+          }
         }
       }
     };
 
     fetchHistory();
-  }, [client, activeChat, isConnected, config.messageLimit]);
+  }, [client, activeChat, isConnected, config.messageLimit, persistedChats]);
 
   const handleCommand = useCallback(
     async (cmd: string) => {
@@ -154,19 +237,40 @@ const WhatsAppCLI: React.FC = () => {
           break;
         case "4": // Force refresh history
           if (client && activeChat) {
-            const chat = await client.getChatById(activeChat.id._serialized);
-            const messages = await chat.fetchMessages({
-              limit: config.messageLimit || 15,
-            });
-            setRecentMessages(
-              messages.map((msg: Message) => ({
-                sender:
-                  msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
-                message: msg.body || "[Media/Sticker]",
-                time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
-                fromMe: msg.id.fromMe,
-              })),
-            );
+            setHistoryError(null);
+            try {
+              const chat = await client.getChatById(activeChat.id._serialized);
+              const messages = await chat.fetchMessages({
+                limit: config.messageLimit || 15,
+              });
+              setRecentMessages(
+                messages.map((msg: Message) => ({
+                  sender:
+                    msg.from?.split("@")[0] ||
+                    (msg.id.fromMe ? "Me" : "Unknown"),
+                  message: msg.body || "[Media/Sticker]",
+                  time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
+                  fromMe: msg.id.fromMe,
+                })),
+              );
+            } catch (error) {
+              logger.error("Failed to refresh history", { error });
+              setHistoryError("Could not refresh messages");
+              // Fallback to persisted
+              const persistedChat = persistedChats.find(
+                c => c.id === activeChat.id._serialized,
+              );
+              if (persistedChat && persistedChat.messages.length > 0) {
+                setRecentMessages(
+                  persistedChat.messages.slice(-15).map(m => ({
+                    sender: m.sender,
+                    message: m.message,
+                    time: m.time,
+                    fromMe: m.fromMe,
+                  })),
+                );
+              }
+            }
           }
           break;
         case "5": // Toggle AI
@@ -188,7 +292,7 @@ const WhatsAppCLI: React.FC = () => {
           break;
       }
     },
-    [client, activeChat, config.messageLimit],
+    [client, activeChat, config.messageLimit, persistedChats],
   );
 
   const handleSendMessage = useCallback(
@@ -229,6 +333,8 @@ const WhatsAppCLI: React.FC = () => {
       activeChat={activeChat}
       qrCode={qrCodeString}
       currentView={currentView}
+      connectionStatus={connectionStatus}
+      historyError={historyError}
     />
   );
 };

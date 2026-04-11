@@ -24,6 +24,12 @@ interface AppProps {
   activeChat: Chat | null;
   qrCode?: string | null;
   currentView?: "chat" | "about" | "settings";
+  connectionStatus?:
+    | "disconnected"
+    | "connecting"
+    | "ready"
+    | "loading_history";
+  historyError?: string | null;
 }
 
 export const App: React.FC<AppProps> = ({
@@ -39,6 +45,8 @@ export const App: React.FC<AppProps> = ({
   activeChat,
   qrCode,
   currentView = "chat",
+  connectionStatus = "ready",
+  historyError = null,
 }) => {
   const { exit } = useApp();
   const [inputMode, setInputMode] = useState<
@@ -217,6 +225,8 @@ export const App: React.FC<AppProps> = ({
         lastMessage={statusMessage}
         inputMode={inputMode}
         sidebarCursor={sidebarCursor}
+        connectionStatus={connectionStatus}
+        historyError={historyError}
       />
     </Box>
   );
