@@ -2,20 +2,20 @@ import React from "react";
 import { Box, Text } from "ink";
 import { getConfig } from "../config";
 
+interface Message {
+  sender: string;
+  message: string;
+  time: string;
+  fromMe: boolean;
+}
+
 interface MainContentProps {
   activeChatName: string | null;
-  messages: Array<{
-    sender: string;
-    message: string;
-    time: string;
-    fromMe: boolean;
-  }>;
+  messages: Message[];
   menuOptions: Array<{ num: string; text: string }>;
   qrCode?: string | null;
   view?: "chat" | "about" | "settings";
 }
-
-// ─── Shared sub-components ────────────────────────────────────────────────────
 
 const Divider: React.FC<{ width?: number }> = ({ width = 48 }) => (
   <Text dimColor>{"─".repeat(width)}</Text>
@@ -49,7 +49,125 @@ const CommandBar: React.FC<{
   </Box>
 );
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+const ChatBubble: React.FC<{
+  message: Message;
+  showSender: boolean;
+}> = ({ message, showSender }) => {
+  return (
+    <Box
+      flexDirection="column"
+      alignItems={message.fromMe ? "flex-end" : "flex-start"}
+      marginBottom={1}
+    >
+      {!message.fromMe && showSender && (
+        <Text bold color="cyan">
+          {message.sender}
+        </Text>
+      )}
+      <Box
+        paddingX={2}
+        paddingY={1}
+        borderStyle={message.fromMe ? "double" : "single"}
+        borderColor={message.fromMe ? "green" : "gray"}
+        borderDimColor={!message.fromMe}
+        flexDirection="column"
+        maxWidth={45}
+      >
+        <Text wrap="wrap">{message.message}</Text>
+        <Box flexDirection="row" justifyContent="flex-end" marginTop={1}>
+          <Text dimColor>{message.time}</Text>
+          {message.fromMe && (
+            <Box marginLeft={1}>
+              <Text color="cyan">✓✓</Text>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+const WhatsAppHeader: React.FC<{
+  chatName: string | null;
+}> = ({ chatName }) => (
+  <Box
+    flexDirection="row"
+    alignItems="center"
+    paddingX={2}
+    paddingY={1}
+    borderStyle="single"
+    borderColor="green"
+  >
+    <Box flexDirection="column" flexGrow={1}>
+      {chatName ? (
+        <>
+          <Text bold color="white">
+            {chatName}
+          </Text>
+          <Text dimColor>click for info</Text>
+        </>
+      ) : (
+        <Text bold color="white">
+          WhatsApp
+        </Text>
+      )}
+    </Box>
+    <Text color="white">⋮</Text>
+  </Box>
+);
+
+const EmptyChatState: React.FC = () => (
+  <Box
+    flexGrow={1}
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+  >
+    <Text bold color="white">
+      WhatsApp CLI
+    </Text>
+    <Box marginTop={1}>
+      <Text dimColor>Select a chat to start messaging</Text>
+    </Box>
+    <Box marginTop={2} flexDirection="column">
+      <Text dimColor> ↑↓ Navigate the chat list</Text>
+      <Text dimColor> ↵ Open highlighted chat</Text>
+      <Text dimColor> ⇧↵ Start typing a message</Text>
+      <Text dimColor> [2] Enter chat number directly</Text>
+    </Box>
+  </Box>
+);
+
+const InputArea: React.FC<{
+  inputMode: string;
+}> = ({ inputMode }) => {
+  const placeholder =
+    inputMode === "message"
+      ? "Type a message..."
+      : "Type a message  ↵ send  Esc cancel";
+
+  return (
+    <Box
+      flexDirection="row"
+      alignItems="center"
+      paddingX={2}
+      paddingY={1}
+      borderStyle="single"
+      borderColor="gray"
+    >
+      <Text color="gray">😊</Text>
+      <Box flexGrow={1} marginX={1}>
+        <Text backgroundColor="black" color="gray">
+          {placeholder}
+        </Text>
+      </Box>
+      <Text color="gray">📎</Text>
+      <Text color="green" bold>
+        {" ➤"}
+      </Text>
+    </Box>
+  );
+};
 
 export const MainContent: React.FC<MainContentProps> = ({
   activeChatName,
@@ -60,7 +178,6 @@ export const MainContent: React.FC<MainContentProps> = ({
 }) => {
   const config = getConfig();
 
-  // ── QR screen ───────────────────────────────────────────────────────────────
   if (qrCode) {
     return (
       <Box
@@ -86,7 +203,6 @@ export const MainContent: React.FC<MainContentProps> = ({
     );
   }
 
-  // ── About screen ────────────────────────────────────────────────────────────
   if (view === "about") {
     return (
       <Box
@@ -129,7 +245,6 @@ export const MainContent: React.FC<MainContentProps> = ({
     );
   }
 
-  // ── Settings screen ─────────────────────────────────────────────────────────
   if (view === "settings") {
     return (
       <Box
@@ -190,93 +305,44 @@ export const MainContent: React.FC<MainContentProps> = ({
     );
   }
 
-  // ── Chat screen ─────────────────────────────────────────────────────────────
   return (
     <Box
       flexDirection="column"
       flexGrow={1}
       borderStyle="round"
-      borderColor="blue"
+      borderColor="green"
     >
-      {/* Header */}
-      <Box paddingX={2} paddingTop={0} flexDirection="row" gap={1}>
-        {activeChatName ? (
-          <>
-            <Text color="cyan">💬</Text>
-            <Text bold color="white">
-              {activeChatName}
-            </Text>
-          </>
-        ) : (
-          <Text bold color="yellow">
-            📱 WhatsApp CLI
-          </Text>
-        )}
-      </Box>
+      <WhatsAppHeader chatName={activeChatName} />
 
-      <Box paddingX={1}>
-        <Divider />
-      </Box>
-
-      {/* Messages area */}
-      <Box flexDirection="column" flexGrow={1} paddingX={2}>
+      <Box flexDirection="column" flexGrow={1} paddingX={1} paddingY={1}>
         {activeChatName ? (
           messages.length > 0 ? (
-            messages.slice(-12).map((msg, index) => (
-              <Box key={index} flexDirection="row">
-                {msg.fromMe ? (
-                  <>
-                    <Text dimColor>[{msg.time}] </Text>
-                    <Text bold color="blue">
-                      You:{" "}
-                    </Text>
-                    <Text wrap="wrap">{msg.message}</Text>
-                    <Text color="blue"> ▸</Text>
-                  </>
-                ) : (
-                  <>
-                    <Text color="green">◂ </Text>
-                    <Text dimColor>[{msg.time}] </Text>
-                    <Text bold color="green">
-                      {msg.sender}:{" "}
-                    </Text>
-                    <Text wrap="wrap">{msg.message}</Text>
-                  </>
-                )}
-              </Box>
-            ))
+            <Box flexDirection="column" flexGrow={1} justifyContent="flex-end">
+              {messages.slice(-15).map((msg, index) => {
+                const prevMsg =
+                  index > 0 ? messages.slice(-15)[index - 1] : null;
+                const showSender = !prevMsg || prevMsg.fromMe !== msg.fromMe;
+                const key = `${msg.fromMe ? "out" : "in"}-${msg.time}-${index}`;
+
+                return (
+                  <ChatBubble key={key} message={msg} showSender={showSender} />
+                );
+              })}
+            </Box>
           ) : (
             <Box flexGrow={1} alignItems="center" justifyContent="center">
               <Text dimColor>No messages yet. Press [3] to send one.</Text>
             </Box>
           )
         ) : (
-          <Box
-            flexGrow={1}
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Text bold color="green">
-              Welcome to WhatsApp CLI
-            </Text>
-            <Box marginTop={1}>
-              <Text dimColor>Select a chat to start messaging:</Text>
-            </Box>
-            <Box marginTop={1} flexDirection="column">
-              <Text dimColor> ↑↓ Navigate the chat list</Text>
-              <Text dimColor> ↵ Open highlighted chat</Text>
-              <Text dimColor> ⇧↵ Start typing a message</Text>
-              <Text dimColor> [2] Enter chat number directly</Text>
-            </Box>
-          </Box>
+          <EmptyChatState />
         )}
       </Box>
 
-      {/* Command bar */}
       <Box paddingX={1}>
         <Divider />
       </Box>
+      <InputArea inputMode={view} />
       <CommandBar menuOptions={menuOptions} />
     </Box>
   );

@@ -6,8 +6,6 @@ interface FooterProps {
   aiProvider: string;
   aiModel: string;
   lastMessage?: string;
-  inputMode?: "command" | "message" | "chat-select";
-  sidebarCursor?: number;
   connectionStatus?:
     | "disconnected"
     | "connecting"
@@ -21,20 +19,9 @@ export const Footer: React.FC<FooterProps> = ({
   aiProvider,
   aiModel,
   lastMessage,
-  inputMode = "command",
-  sidebarCursor = -1,
   connectionStatus = "ready",
   historyError = null,
 }) => {
-  const getHelpText = (): string => {
-    if (lastMessage) return lastMessage;
-    if (inputMode === "message") return "Type message  ↵ send  Esc cancel";
-    if (inputMode === "chat-select")
-      return "Type number  ↵ confirm  Esc cancel";
-    if (sidebarCursor >= 0) return "↑↓ navigate  ↵ open chat  Esc cancel";
-    return "[1-8] commands  [↑↓] navigate chats  [Q] quit";
-  };
-
   const getStatusIndicator = () => {
     switch (connectionStatus) {
       case "connecting":
@@ -52,9 +39,13 @@ export const Footer: React.FC<FooterProps> = ({
   const status = getStatusIndicator();
 
   return (
-    <Box borderStyle="single" borderColor="gray" paddingX={1} width="100%">
+    <Box flexDirection="row" alignItems="center" paddingX={1}>
       <Box flexGrow={1}>
-        <Text dimColor>{getHelpText()}</Text>
+        {lastMessage && (
+          <Text color="cyan" bold>
+            {lastMessage}
+          </Text>
+        )}
         {historyError && <Text color="red"> ⚠ {historyError}</Text>}
       </Box>
       <Text dimColor> │ </Text>
@@ -63,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({
       </Text>
       <Text dimColor> │ </Text>
       <Text bold color={aiEnabled ? "magenta" : "gray"}>
-        AI {aiEnabled ? "●" : "○"}
+        {aiEnabled ? "🤖 ON" : "🤖 OFF"}
       </Text>
       {aiEnabled && (
         <Text dimColor>

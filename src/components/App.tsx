@@ -223,8 +223,6 @@ export const App: React.FC<AppProps> = ({
         aiProvider={aiProvider}
         aiModel={aiModel}
         lastMessage={statusMessage}
-        inputMode={inputMode}
-        sidebarCursor={sidebarCursor}
         connectionStatus={connectionStatus}
         historyError={historyError}
       />
