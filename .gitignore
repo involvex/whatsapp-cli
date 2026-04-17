@@ -43,3 +43,4 @@ test_output.txt
 .wwebjs_auth_session
 
 .tmp-auth
+.tox
