@@ -1,6 +1,6 @@
 {
   "name": "@involvex/whatsapp-cli",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A terminal WhatsApp client with Matrix-style Ink TUI, session persistence, and optional AI integration",
   "keywords": [
     "whatsapp",
