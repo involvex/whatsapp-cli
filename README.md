@@ -1,51 +1,57 @@
 # WhatsApp CLI
 
-A minimal terminal-based WhatsApp client built with TypeScript, [whatsapp-web.js](https://github.com/pedrosans/whatsapp-web.js), and Node.js readline.
+A terminal WhatsApp client with a compact **Matrix-style** UI, built with TypeScript, [React](https://react.dev/) + [Ink](https://github.com/vadimdemedes/ink), and [whatsapp-web.js](https://github.com/pedrosans/whatsapp-web.js).
 
 ## Features
 
-- Clean CLI interface with colored output
-- QR code authentication in terminal
-- Menu-driven commands with settings panel
-- Send and receive messages
-- **AI Message Generation** support (OpenRouter, OpenAI, Gemini)
-- Session persistence - no re-authentication needed after restart
-- Production-ready and minimal
+- Full-screen Ink TUI with cyan/green Matrix theme
+- Scrollable chat list and message pane (fixed terminal height)
+- QR code authentication in the terminal
+- Session persistence under `~/.whatsapp-cli/`
+- Auto-reconnect with visible connection status
+- In-app logout and re-authentication (no process exit)
+- Optional AI message generation (OpenRouter, OpenAI, Gemini)
+- Keyboard-driven navigation
 
-## Quick Start
+## Install
+
+### From npm
 
 ```bash
-# Install dependencies
+npm install -g @involvex/whatsapp-cli
+```
+
+Then run:
+
+```bash
+whatsapp-cli
+```
+
+### From source
+
+```bash
+git clone https://github.com/involvex/whatsapp-cli.git
+cd whatsapp-cli
 bun install
-
-# Run in development
-bun dev
-
-# Build for production
 bun run build
-
-# Start the CLI
 bun start
 ```
 
-## Installation
+## Prerequisites
 
-### Prerequisites
+- **Node.js** 18+ (required for `npm install -g` and production use)
+- **Bun** 1.0+ (optional, for local development)
+- **Chrome, Chromium, or Edge** in a standard install location, or Puppeteer-managed Chrome
+- **RAM**: ~2 GB minimum (headless browser)
 
-- **Node.js**: v18+ or **Bun**: v1.0+
-- **Chrome/Chromium or Edge**: Installed in a standard location, or let Puppeteer manage Chrome
-- **Memory**: Minimum 2GB RAM
+### Browser configuration
 
-### Browser Configuration
-
-The CLI now tries browsers in this order:
+The CLI resolves a browser in this order:
 
 1. `PUPPETEER_EXECUTABLE_PATH`
 2. `BUN_CHROME_PATH`
-3. Standard Chrome/Chromium/Edge install locations
+3. Standard Chrome/Chromium/Edge paths
 4. Puppeteer's managed browser cache
-
-If auto-detection fails, set an explicit path:
 
 **Windows:**
 
@@ -65,118 +71,127 @@ export PUPPETEER_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS
 export PUPPETEER_EXECUTABLE_PATH="/usr/bin/google-chrome"
 ```
 
-If you do not have a local browser install, download Puppeteer's managed Chrome once:
+If no local browser is found:
 
 ```bash
-bunx puppeteer browsers install chrome
+npx puppeteer browsers install chrome
 ```
 
-## First Run
+## First run
 
-1. Run `bun start`
-2. Scan the QR code with your WhatsApp app
-3. Session is saved automatically for next time
+1. Start the CLI: `whatsapp-cli` or `bun start`
+2. Scan the QR code with WhatsApp on your phone
+3. Session data is saved to `~/.whatsapp-cli/auth/` for later runs
 
 ## Usage
 
-### Main Menu
+### Keyboard shortcuts
 
-```
-1. List chats         - Show all your WhatsApp chats
-2. Select chat        - Choose a chat to work with
-3. Send message       - Send a message to the selected chat
-4. Show chat history  - Display last 15 messages from chat
-5. Toggle AI mode     - Enable/disable AI message generation
-6. Settings           - Configure AI provider, model, temperature, tokens
-7. About              - Show app information
-8. Logout & reset     - Clear auth token and force re-scan QR code
-Q. Exit               - Close the application
-```
+| Key           | Action                                  |
+| ------------- | --------------------------------------- |
+| `↑` / `↓`     | Navigate chat list                      |
+| `Enter`       | Open highlighted chat                   |
+| `Shift+Enter` | Type a message                          |
+| `[1]`         | Refresh chats / reconnect when offline  |
+| `[2]`         | Select chat by number                   |
+| `[3]`         | Send message                            |
+| `[4]`         | Reload chat history                     |
+| `[5]`         | Toggle AI                               |
+| `[6]`         | Settings                                |
+| `[7]`         | About                                   |
+| `[8]`         | Logout (clears session, shows QR again) |
+| `Q`           | Exit                                    |
+| `Esc`         | Cancel message/select input             |
 
-### AI Integration
+### Configuration
 
-Configure AI providers in Settings (option 6):
+Config file: `~/.whatsapp-cli/config.json`
+
+| Setting              | Description                                       |
+| -------------------- | ------------------------------------------------- |
+| `theme`              | `matrix` (default), `default`, `dark`, `colorful` |
+| `autoReconnect`      | Retry connection on disconnect (default: `true`)  |
+| `messageLimit`       | Messages loaded per chat (default: `15`)          |
+| `aiProvider`         | AI provider, model, API key, temperature          |
+| `chatHistoryEnabled` | Persist chat history locally                      |
+| `soundEnabled`       | Terminal bell on new messages                     |
+
+### AI integration
+
+Set API keys in your environment:
 
 ```bash
-# Set API keys
 export OPENROUTER_API_KEY=your_key_here
 export OPENAI_API_KEY=your_key_here
 export GEMINI_API_KEY=your_key_here
 ```
 
-Supported providers:
-
-- **OpenRouter** - Multi-model support (Claude, GPT, PaLM)
-- **OpenAI** - GPT-3.5, GPT-4 models
-- **Google Gemini** - Gemini AI models
+Supported providers: OpenRouter, OpenAI, Google Gemini.
 
 ## Development
 
 ```bash
-# Format code
-bun run format
-
-# Type check
+bun install
+bun dev          # watch mode
+bun run build    # dist/cli.js + dist/cli-wrapper.js
 bun run typecheck
-
-# Lint
 bun run lint
-bun run lint:fix
-
-# Build
-bun run build
 ```
 
-## Documentation
+## Publish (maintainers)
 
-- [Quick Start Guide](docs/QUICKSTART.md)
-- [Session Persistence](docs/SESSION_PERSISTENCE.md)
-- [Security Policy](Security.md)
-- [Claude Code Integration](Claude.md)
-- [AI Agents](Agents.md)
+```bash
+bun run build
+npm publish --access public
+```
 
-## Project Structure
+`prepublishOnly` runs the build automatically. The published tarball includes only `dist/`, `README.md`, `LICENSE`, and `Security.md`.
+
+## Project structure
 
 ```
 src/
-├── cli.ts              # Main CLI entry point
-├── client.ts           # WhatsApp Web.js wrapper
-├── ui.ts               # Chalk-based UI utilities
-├── config.ts           # Configuration management
-├── settings.ts         # Interactive settings menu
-└── readline-utils.ts   # CLI input utilities
+├── cli.tsx              # Ink app entry + command handling
+├── client.ts            # whatsapp-web.js lifecycle
+├── config.ts            # ~/.whatsapp-cli config paths
+├── theme.ts             # TUI color themes
+├── components/          # App, Sidebar, MainContent, Footer
+└── hooks/               # Terminal size + scroll viewport
 ```
 
 ## Troubleshooting
 
-### Chrome Not Found
+### Chrome not found
 
-The CLI auto-detects Chrome/Chromium/Edge before falling back to Puppeteer's cache.
-If startup still fails:
+1. Install Chrome, Chromium, or Edge.
+2. Set `PUPPETEER_EXECUTABLE_PATH` to the browser executable.
+3. Or run `npx puppeteer browsers install chrome`.
 
-1. Verify a browser is installed.
-2. Set `PUPPETEER_EXECUTABLE_PATH` to the exact browser executable.
-3. Or install Puppeteer's managed browser: `bunx puppeteer browsers install chrome`
-4. If you use a custom cache location, verify `PUPPETEER_CACHE_DIR`.
+### Session expired or corrupt
 
-### DEP0040 Warning
+```bash
+rm -rf ~/.whatsapp-cli/auth
+whatsapp-cli
+```
 
-`[DEP0040]` comes from the current `whatsapp-web.js -> node-fetch -> whatwg-url -> tr46`
-dependency chain on newer Node versions. The CLI filters that upstream warning during startup,
-but the root cause remains upstream until those dependencies are modernized.
+Then scan the QR code again.
 
-### Session Expired
+### Disconnected / reconnecting
 
-Delete `~/.whatsapp-cli/auth/` and re-scan the QR code.
+- Footer shows `RECONNECTING (n/3)` during auto-reconnect.
+- Press `[1]` to manually refresh or reconnect.
+- Set `"autoReconnect": false` in config to disable auto-retry.
 
-### High Memory Usage
+### High memory usage
 
-Chrome headless mode uses ~150-300MB RAM. This is normal.
+Headless Chrome typically uses 150–300 MB RAM. This is expected.
+
+## Documentation
+
+- [Quick Start](docs/QUICKSTART.md)
+- [Session Persistence](docs/SESSION_PERSISTENCE.md)
+- [Security Policy](Security.md)
 
 ## License
 
-MIT
-
----
-
-**Built with** [Claude Code](https://claude.com/claude-code) | [Documentation](docs/)
+MIT — see [LICENSE](LICENSE).

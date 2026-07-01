@@ -35,7 +35,7 @@ export interface LoggingConfig {
 
 export interface CliConfig {
   aiProvider: AiProviderConfig;
-  theme: "default" | "dark" | "colorful";
+  theme: "matrix" | "default" | "dark" | "colorful";
   messageLimit: number;
   autoReconnect: boolean;
   logging: LoggingConfig;
@@ -51,7 +51,7 @@ const DEFAULT_CONFIG: CliConfig = {
     temperature: 0.7,
     maxTokens: 500,
   },
-  theme: "default",
+  theme: "matrix",
   messageLimit: 15,
   autoReconnect: true,
   logging: {

@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import os from "os";
 import path from "path";
 import { getLogger } from "./logger";
-import { PATHS } from "./config";
+import { PATHS, getConfig } from "./config";
 
 const logger = getLogger();
 let clientInstance: Client | null = null;
@@ -15,9 +15,16 @@ let qrCallback: ((qr: string) => void) | null = null;
 let messageCallback: ((message: Message) => void) | null = null;
 let readyCallback: ((client: Client) => void) | null = null;
 let errorCallback: ((error: Error) => void) | null = null;
+let disconnectedCallback: ((reason: string) => void) | null = null;
+let reconnectingCallback:
+  ((attempt: number, maxAttempts: number) => void) | null = null;
+let authenticatedCallback: (() => void) | null = null;
+let loadingScreenCallback: ((percent: number) => void) | null = null;
 let connectionAttempts = 0;
 let isLoggingOut = false;
 const MAX_RETRY_ATTEMPTS = 3;
+const INIT_TIMEOUT_MS = 60_000;
+const RECONNECT_DELAY_MS = 5_000;
 const DEFAULT_PUPPETEER_CACHE_DIR = path.join(
   os.homedir(),
   ".cache",
@@ -49,10 +56,7 @@ async function cleanupStaleBrowserSessions(): Promise<boolean> {
 }
 
 type BrowserResolutionSource =
-  | "PUPPETEER_EXECUTABLE_PATH"
-  | "BUN_CHROME_PATH"
-  | "system"
-  | "puppeteer";
+  "PUPPETEER_EXECUTABLE_PATH" | "BUN_CHROME_PATH" | "system" | "puppeteer";
 type LinkedDeviceBrowserName = "Chrome" | "Edge";
 type WhatsAppWebModule = typeof import("whatsapp-web.js");
 
@@ -428,8 +432,56 @@ export function setErrorCallback(callback: (error: Error) => void) {
   errorCallback = callback;
 }
 
+export function setDisconnectedCallback(callback: (reason: string) => void) {
+  disconnectedCallback = callback;
+}
+
+export function setReconnectingCallback(
+  callback: (attempt: number, maxAttempts: number) => void,
+) {
+  reconnectingCallback = callback;
+}
+
+export function setAuthenticatedCallback(callback: () => void) {
+  authenticatedCallback = callback;
+}
+
+export function setLoadingScreenCallback(callback: (percent: number) => void) {
+  loadingScreenCallback = callback;
+}
+
 export function getClientInstance(): Client | null {
   return clientInstance;
+}
+
+async function isClientAlive(client: Client): Promise<boolean> {
+  try {
+    const state = await client.getState();
+    return state === "CONNECTED" || state === "OPENING";
+  } catch {
+    return false;
+  }
+}
+
+export async function destroyClient(): Promise<void> {
+  const instance = clientInstance;
+  clientInstance = null;
+  initPromise = null;
+
+  if (!instance) return;
+
+  try {
+    await instance.destroy();
+    logger.info("Client destroyed");
+  } catch {
+    logger.debug("Client destroy failed (browser may already be closed)");
+  }
+}
+
+export async function reconnectClient(): Promise<Client> {
+  connectionAttempts = 0;
+  await destroyClient();
+  return initializeClient();
 }
 
 export async function initializeClient(): Promise<Client> {
@@ -449,11 +501,29 @@ export async function initializeClient(): Promise<Client> {
   }
 
   if (clientInstance) {
-    logger.debug("Client instance already exists, reusing");
-    return Promise.resolve(clientInstance);
+    const alive = await isClientAlive(clientInstance);
+    if (alive) {
+      logger.debug("Client instance already exists, reusing");
+      return Promise.resolve(clientInstance);
+    }
+    logger.info("Stale client instance detected, destroying");
+    await destroyClient();
   }
 
   initPromise = new Promise((resolve, reject) => {
+    let initTimedOut = false;
+    const timeoutId = setTimeout(() => {
+      initTimedOut = true;
+      initPromise = null;
+      void destroyClient();
+      reject(new Error("Client initialization timed out after 60s"));
+      if (errorCallback) {
+        errorCallback(new Error("Client initialization timed out"));
+      }
+    }, INIT_TIMEOUT_MS);
+
+    const clearInitTimeout = () => clearTimeout(timeoutId);
+
     const initialize = async () => {
       try {
         const { Client: WhatsAppClient, LocalAuth } =
@@ -507,12 +577,14 @@ export async function initializeClient(): Promise<Client> {
         console.error("Failed to create Client:", errorMsg);
         initPromise = null;
         reject(new Error(`Client creation failed: ${errorMsg}`));
+        clearInitTimeout();
         return;
       }
 
       if (!clientInstance) {
         logger.error("Client instance not created");
         reject(new Error("Client instance not created"));
+        clearInitTimeout();
         return;
       }
 
@@ -527,7 +599,16 @@ export async function initializeClient(): Promise<Client> {
         console.log("QR code received - waiting for scan...");
       });
 
+      clientInstance.on("authenticated", () => {
+        logger.logClientEvent("authenticated");
+        if (authenticatedCallback) {
+          authenticatedCallback();
+        }
+      });
+
       clientInstance.on("ready", () => {
+        if (initTimedOut) return;
+        clearInitTimeout();
         logger.logClientEvent("ready");
         console.log("Client is ready!");
         connectionAttempts = 0;
@@ -541,10 +622,11 @@ export async function initializeClient(): Promise<Client> {
       });
 
       clientInstance.on("auth_failure", msg => {
+        clearInitTimeout();
         logger.logClientEvent("auth_failure", { message: msg });
         const errorMsg = `Authentication failed: ${msg}`;
         console.error("Authentication failure:", msg);
-        clientInstance = null;
+        void destroyClient();
         const error = new Error(errorMsg);
         if (errorCallback) {
           errorCallback(error);
@@ -556,10 +638,22 @@ export async function initializeClient(): Promise<Client> {
       clientInstance.on("disconnected", reason => {
         logger.logClientEvent("disconnected", { reason });
         console.log("Client disconnected:", reason);
-        clientInstance = null;
-        initPromise = null;
+
+        if (disconnectedCallback) {
+          disconnectedCallback(String(reason));
+        }
+
+        void destroyClient();
 
         if (isLoggingOut) return;
+
+        const autoReconnect = getConfig().autoReconnect;
+        if (!autoReconnect) {
+          if (errorCallback) {
+            errorCallback(new Error(`Disconnected: ${reason}`));
+          }
+          return;
+        }
 
         if (connectionAttempts < MAX_RETRY_ATTEMPTS) {
           connectionAttempts++;
@@ -569,6 +663,9 @@ export async function initializeClient(): Promise<Client> {
           console.log(
             `Attempting reconnection (${connectionAttempts}/${MAX_RETRY_ATTEMPTS})...`,
           );
+          if (reconnectingCallback) {
+            reconnectingCallback(connectionAttempts, MAX_RETRY_ATTEMPTS);
+          }
           setTimeout(() => {
             if (initPromise === null) {
               initializeClient().catch(err => {
@@ -579,7 +676,7 @@ export async function initializeClient(): Promise<Client> {
                 }
               });
             }
-          }, 5000);
+          }, RECONNECT_DELAY_MS);
         } else {
           logger.error("Max reconnection attempts reached");
           console.error("Max reconnection attempts reached");
@@ -607,9 +704,17 @@ export async function initializeClient(): Promise<Client> {
         }
       });
 
-      clientInstance.on("loading_screen", percent => {
-        logger.debug(`Loading WhatsApp... ${percent}%`);
-        console.log(`Loading WhatsApp... ${percent}%`);
+      clientInstance.on("loading_screen", (percent, message) => {
+        const progress =
+          typeof percent === "number" ? percent : Number(percent) || 0;
+        logger.debug(`Loading WhatsApp... ${progress}%`, { message });
+        console.log(`Loading WhatsApp... ${progress}%`);
+        if (loadingScreenCallback) {
+          loadingScreenCallback(progress);
+        }
+        if (authenticatedCallback && progress > 0) {
+          authenticatedCallback();
+        }
       });
 
       // Initialize the client
@@ -617,16 +722,19 @@ export async function initializeClient(): Promise<Client> {
         logger.info("Initializing client...");
         await clientInstance.initialize();
       } catch (error) {
+        clearInitTimeout();
         const errorMsg = error instanceof Error ? error.message : String(error);
         logger.error("Failed to initialize client", { error: errorMsg });
         console.error("Failed to initialize client:", errorMsg);
         initPromise = null;
+        await destroyClient();
         reject(new Error(`Client initialization failed: ${errorMsg}`));
         return;
       }
     };
 
     initialize().catch(err => {
+      clearInitTimeout();
       logger.error("Initialize promise rejected", { error: err });
       reject(err);
     });
@@ -640,21 +748,16 @@ export async function clearAuthSession(): Promise<void> {
   isLoggingOut = true;
   try {
     if (clientInstance) {
-      const instance = clientInstance;
-      clientInstance = null;
-      initPromise = null;
       try {
-        await instance.logout();
+        await clientInstance.logout();
         logger.info("Logged out successfully");
         console.log("✓ Logged out successfully");
       } catch {
         logger.debug("Browser closed during logout (expected)");
       }
-    } else {
-      clientInstance = null;
-      initPromise = null;
     }
 
+    await destroyClient();
     await fs.rm(PATHS.auth, { recursive: true, force: true });
     logger.info("Authentication session cleared");
     console.log("✓ Authentication session cleared");
@@ -663,6 +766,7 @@ export async function clearAuthSession(): Promise<void> {
     console.error("Error clearing session:", error);
   } finally {
     isLoggingOut = false;
+    connectionAttempts = 0;
   }
 }
 
