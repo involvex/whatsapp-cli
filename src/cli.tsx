@@ -435,10 +435,39 @@ async function cliEntry(): Promise<void> {
   const config = await loadConfig();
   logger.updateConfig(config.logging);
 
-  render(<WhatsAppCLI />);
+  // Render inside the terminal's alternate screen buffer so oversized transient
+  // frames (like the QR screen) never scroll the main buffer and leave artifacts.
+  const ENTER_ALT_SCREEN = "\x1b[?1049h\x1b[2J\x1b[H";
+  const LEAVE_ALT_SCREEN = "\x1b[?1049l";
+  let screenRestored = false;
+  const restoreScreen = () => {
+    if (screenRestored) return;
+    screenRestored = true;
+    process.stdout.write(LEAVE_ALT_SCREEN);
+  };
+
+  process.stdout.write(ENTER_ALT_SCREEN);
+  process.on("exit", restoreScreen);
+  process.on("SIGINT", () => {
+    restoreScreen();
+    process.exit(0);
+  });
+  process.on("SIGTERM", () => {
+    restoreScreen();
+    process.exit(0);
+  });
+
+  const { waitUntilExit } = render(<WhatsAppCLI />);
+
+  try {
+    await waitUntilExit();
+  } finally {
+    restoreScreen();
+  }
 }
 
 cliEntry().catch(error => {
+  process.stdout.write("\x1b[?1049l");
   console.error(`Fatal error: ${error}`);
   process.exit(1);
 });

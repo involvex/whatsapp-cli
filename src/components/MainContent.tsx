@@ -107,6 +107,7 @@ export const MainContent: React.FC<MainContentProps> = ({
         borderColor={theme.border}
         alignItems="center"
         justifyContent="center"
+        overflow="hidden"
       >
         <Text bold color={theme.header}>
           AUTH
