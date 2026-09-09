@@ -20,6 +20,9 @@ interface FooterProps {
   connectionError?: string | null;
   reconnectAttempt?: number;
   reconnectMax?: number;
+  searchQuery?: string;
+  searchMatchIndex?: number;
+  searchMatchCount?: number;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -32,6 +35,9 @@ export const Footer: React.FC<FooterProps> = ({
   connectionError = null,
   reconnectAttempt = 0,
   reconnectMax = 3,
+  searchQuery = "",
+  searchMatchIndex = -1,
+  searchMatchCount = 0,
 }) => {
   const theme = useTheme();
 
@@ -73,7 +79,21 @@ export const Footer: React.FC<FooterProps> = ({
             ({aiProvider}/{aiModel})
           </Text>
         )}
-        {lastMessage && (
+        {searchQuery && searchMatchCount > 0 && (
+          <>
+            <Text color={theme.muted}> · </Text>
+            <Text color={theme.accent}>
+              SEARCH: {searchMatchIndex + 1}/{searchMatchCount}
+            </Text>
+          </>
+        )}
+        {searchQuery && searchMatchCount === 0 && (
+          <>
+            <Text color={theme.muted}> · </Text>
+            <Text color={theme.error}>SEARCH: 0 matches</Text>
+          </>
+        )}
+        {lastMessage && !searchQuery && (
           <>
             <Text color={theme.muted}> · </Text>
             <Text color={theme.header}>{lastMessage}</Text>
@@ -85,7 +105,9 @@ export const Footer: React.FC<FooterProps> = ({
         )}
       </Box>
       <Text color={theme.primary}>
-        [↑↓] Nav [↵] Open [⇧↵] Type [1] Refresh [3] Send [8] Logout [Q] Exit
+        {searchQuery
+          ? "[↑↓] matches [Esc] clear [Q] Exit"
+          : "[↑↓] Nav [↵] Open [⇧↵] Type [1] Refresh [3] Send [M] Media [8] Logout [Q] Exit"}
       </Text>
     </Box>
   );

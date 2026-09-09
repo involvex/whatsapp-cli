@@ -27,9 +27,14 @@ import {
   chatToPersistedChat,
   type PersistedChat,
 } from "./chatPersistence";
+import { MessageMedia } from "whatsapp-web.js";
 import type { Chat, Message, Client } from "whatsapp-web.js";
+import { promises as fs } from "fs";
+import path from "path";
+import { PATHS } from "./config";
 
 const RECONNECT_MAX = 3;
+const MAX_MEDIA_SIZE = 50 * 1024 * 1024;
 const logger = createLogger({ console: false, file: false });
 
 const WhatsAppCLI: React.FC = () => {
@@ -45,10 +50,13 @@ const WhatsAppCLI: React.FC = () => {
   const [aiEnabled, setAiEnabled] = useState(false);
   const [recentMessages, setRecentMessages] = useState<
     Array<{
+      id: string;
       sender: string;
       message: string;
       time: string;
       fromMe: boolean;
+      mediaType?: string;
+      hasMedia?: boolean;
     }>
   >([]);
   const [client, setClient] = useState<Client | null>(null);
@@ -56,12 +64,76 @@ const WhatsAppCLI: React.FC = () => {
   const [currentView, setCurrentView] = useState<"chat" | "about" | "settings">(
     "chat",
   );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMatchIndex, setSearchMatchIndex] = useState(0);
+  const [searchMatchCount, setSearchMatchCount] = useState(0);
+  const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set());
+
+  void searchQuery;
+  void setSearchQuery;
+  void searchMatchIds;
+  void setSearchMatchIds;
 
   const activeChatRef = useRef<Chat | null>(null);
   const initStartedRef = useRef(false);
   activeChatRef.current = activeChat;
 
   const config = getConfig();
+
+  const computeSearchMatches = useCallback(
+    (query: string) => {
+      if (!query.trim()) {
+        setSearchMatchIds(new Set());
+        setSearchMatchCount(0);
+        setSearchMatchIndex(0);
+        return;
+      }
+      const q = query.toLowerCase();
+      const matchIds = new Set<string>();
+      persistedChats.forEach(chat => {
+        chat.messages.forEach(msg => {
+          if (
+            msg.sender.toLowerCase().includes(q) ||
+            msg.message.toLowerCase().includes(q)
+          ) {
+            matchIds.add(msg.id);
+          }
+        });
+      });
+      setSearchMatchIds(matchIds);
+      const count = matchIds.size;
+      setSearchMatchCount(count);
+      if (count > 0) {
+        setSearchMatchIndex(prev => Math.min(prev, count - 1));
+      } else {
+        setSearchMatchIndex(0);
+      }
+    },
+    [persistedChats],
+  );
+
+  const handleSearchNext = useCallback(() => {
+    if (searchMatchCount === 0) return;
+    setSearchMatchIndex(prev => (prev + 1) % searchMatchCount);
+  }, [searchMatchCount]);
+
+  const handleSearchPrev = useCallback(() => {
+    if (searchMatchCount === 0) return;
+    setSearchMatchIndex(
+      prev => (prev - 1 + searchMatchCount) % searchMatchCount,
+    );
+  }, [searchMatchCount]);
+
+  const toRecentMessage = useCallback(
+    (msg: Message) => ({
+      id: msg.id._serialized,
+      sender: msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
+      message: msg.body || "[Media/Sticker]",
+      time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
+      fromMe: msg.id.fromMe,
+    }),
+    [],
+  );
 
   const loadChatsFromClient = useCallback(async (readyClient: Client) => {
     try {
@@ -162,15 +234,24 @@ const WhatsAppCLI: React.FC = () => {
       });
 
       const currentActive = activeChatRef.current;
-      if (
+      const isForActiveChat =
         currentActive &&
         (msg.from === currentActive.id._serialized ||
-          (msg.id.fromMe && msg.to === currentActive.id._serialized))
-      ) {
+          (msg.id.fromMe && msg.to === currentActive.id._serialized));
+
+      if (isForActiveChat) {
         setRecentMessages(prev => {
           const newMessages = [
             ...prev,
-            { sender, message: messageText, time, fromMe: msg.id.fromMe },
+            {
+              id: msg.id._serialized,
+              sender,
+              message: messageText,
+              time,
+              fromMe: msg.id.fromMe,
+              mediaType: msg.hasMedia ? msg.type : undefined,
+              hasMedia: msg.hasMedia,
+            },
           ];
           return newMessages.slice(-20);
         });
@@ -180,6 +261,44 @@ const WhatsAppCLI: React.FC = () => {
         const isActiveChat =
           currentActive && msg.from === currentActive.id._serialized;
         process.stdout.write(isActiveChat ? "\x07" : "\x07\x07");
+      }
+
+      if (msg.hasMedia && getConfig().autoDownloadMedia && !msg.id.fromMe) {
+        const fileSize = (msg as Message & { media?: { filesize?: number } })
+          .media?.filesize;
+        if (fileSize && fileSize > MAX_MEDIA_SIZE) {
+          logger.warn("Media download skipped: too large", {
+            size: fileSize,
+            max: MAX_MEDIA_SIZE,
+            type: msg.type,
+          });
+          return;
+        }
+        const fileName = `${Date.now()}_${msg.id._serialized}`;
+        const ext =
+          msg.type === "image"
+            ? ".jpg"
+            : msg.type === "video"
+              ? ".mp4"
+              : msg.type === "audio"
+                ? ".ogg"
+                : ".bin";
+        const savePath = path.join(PATHS.downloads, fileName + ext);
+        fs.mkdir(PATHS.downloads, { recursive: true }).catch(err => {
+          logger.error("Failed to create downloads dir", { error: err });
+        });
+        msg
+          .downloadMedia()
+          .then(media => {
+            return fs.writeFile(savePath, Buffer.from(media.data, "base64"));
+          })
+          .then(() => {
+            logger.info("Media downloaded", { savePath, type: msg.type });
+          })
+          .catch(err => {
+            logger.error("Media download failed", { error: err });
+            setConnectionError("Media download failed");
+          });
       }
     });
   }, [loadChatsFromClient]);
@@ -226,15 +345,7 @@ const WhatsAppCLI: React.FC = () => {
             limit: config.messageLimit || 15,
           });
 
-          setRecentMessages(
-            messages.map((msg: Message) => ({
-              sender:
-                msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
-              message: msg.body || "[Media/Sticker]",
-              time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
-              fromMe: msg.id.fromMe,
-            })),
-          );
+          setRecentMessages(messages.map(toRecentMessage));
           setConnectionStatus("ready");
         } catch (error) {
           logger.error("Failed to fetch history", { error });
@@ -246,12 +357,15 @@ const WhatsAppCLI: React.FC = () => {
           );
           if (persistedChat && persistedChat.messages.length > 0) {
             setRecentMessages(
-              persistedChat.messages.slice(-15).map(m => ({
-                sender: m.sender,
-                message: m.message,
-                time: m.time,
-                fromMe: m.fromMe,
-              })),
+              persistedChat.messages
+                .slice(-(config.messageLimit || 15))
+                .map(m => ({
+                  id: m.id,
+                  sender: m.sender,
+                  message: m.message,
+                  time: m.time,
+                  fromMe: m.fromMe,
+                })),
             );
           }
         }
@@ -259,7 +373,14 @@ const WhatsAppCLI: React.FC = () => {
     };
 
     void fetchHistory();
-  }, [client, activeChat, isConnected, config.messageLimit, persistedChats]);
+  }, [
+    client,
+    activeChat,
+    isConnected,
+    config.messageLimit,
+    persistedChats,
+    toRecentMessage,
+  ]);
 
   const handleLogout = useCallback(async () => {
     setConnectionStatus("connecting");
@@ -280,6 +401,49 @@ const WhatsAppCLI: React.FC = () => {
 
     await startClient();
   }, [startClient]);
+
+  const handleSendMessage = useCallback(
+    async (message: string) => {
+      if (client && activeChat && message.trim()) {
+        try {
+          await client.sendMessage(activeChat.id._serialized, message);
+        } catch (error) {
+          logger.error("Send message error", { error });
+          setConnectionError(
+            error instanceof Error ? error.message : "Send failed",
+          );
+        }
+      }
+    },
+    [client, activeChat],
+  );
+
+  const handleSendMedia = useCallback(
+    async (filePath: string) => {
+      if (!client || !activeChat || !filePath.trim()) return;
+      const trimmed = filePath.trim();
+      try {
+        const stat = await fs.stat(trimmed);
+        if (!stat.isFile()) {
+          setConnectionError("Path is not a file");
+          return;
+        }
+      } catch {
+        setConnectionError("File not found");
+        return;
+      }
+      try {
+        const media = await MessageMedia.fromFilePath(trimmed);
+        await client.sendMessage(activeChat.id._serialized, media);
+      } catch (error) {
+        logger.error("Send media error", { error });
+        setConnectionError(
+          error instanceof Error ? error.message : "Send media failed",
+        );
+      }
+    },
+    [client, activeChat],
+  );
 
   const handleCommand = useCallback(
     async (cmd: string) => {
@@ -314,16 +478,7 @@ const WhatsAppCLI: React.FC = () => {
               const messages = await chat.fetchMessages({
                 limit: config.messageLimit || 15,
               });
-              setRecentMessages(
-                messages.map((msg: Message) => ({
-                  sender:
-                    msg.from?.split("@")[0] ||
-                    (msg.id.fromMe ? "Me" : "Unknown"),
-                  message: msg.body || "[Media/Sticker]",
-                  time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
-                  fromMe: msg.id.fromMe,
-                })),
-              );
+              setRecentMessages(messages.map(toRecentMessage));
             } catch (error) {
               logger.error("Failed to refresh history", { error });
               setHistoryError("Could not refresh messages");
@@ -332,12 +487,15 @@ const WhatsAppCLI: React.FC = () => {
               );
               if (persistedChat && persistedChat.messages.length > 0) {
                 setRecentMessages(
-                  persistedChat.messages.slice(-15).map(m => ({
-                    sender: m.sender,
-                    message: m.message,
-                    time: m.time,
-                    fromMe: m.fromMe,
-                  })),
+                  persistedChat.messages
+                    .slice(-(config.messageLimit || 15))
+                    .map(m => ({
+                      id: m.id,
+                      sender: m.sender,
+                      message: m.message,
+                      time: m.time,
+                      fromMe: m.fromMe,
+                    })),
                 );
               }
             }
@@ -365,23 +523,8 @@ const WhatsAppCLI: React.FC = () => {
       isConnected,
       loadChatsFromClient,
       handleLogout,
+      toRecentMessage,
     ],
-  );
-
-  const handleSendMessage = useCallback(
-    async (message: string) => {
-      if (client && activeChat && message.trim()) {
-        try {
-          await client.sendMessage(activeChat.id._serialized, message);
-        } catch (error) {
-          logger.error("Send message error", { error });
-          setConnectionError(
-            error instanceof Error ? error.message : "Send failed",
-          );
-        }
-      }
-    },
-    [client, activeChat],
   );
 
   const handleSelectChat = useCallback(
@@ -404,7 +547,11 @@ const WhatsAppCLI: React.FC = () => {
       recentMessages={recentMessages}
       onCommand={handleCommand}
       onSendMessage={handleSendMessage}
+      onSendMedia={handleSendMedia}
       onSelectChat={handleSelectChat}
+      onSearch={computeSearchMatches}
+      onSearchNext={handleSearchNext}
+      onSearchPrev={handleSearchPrev}
       activeChat={activeChat}
       qrCode={qrCodeString}
       currentView={currentView}
@@ -413,6 +560,9 @@ const WhatsAppCLI: React.FC = () => {
       connectionError={connectionError}
       reconnectAttempt={reconnectAttempt}
       reconnectMax={RECONNECT_MAX}
+      searchQuery={searchQuery}
+      searchMatchIndex={searchMatchIndex}
+      searchMatchCount={searchMatchCount}
     />
   );
 };

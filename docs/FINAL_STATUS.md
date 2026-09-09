@@ -26,30 +26,26 @@
 ## 📁 Final Project Structure
 
 ```
-whatsappwebtui/
+whatsapp-cli/
 ├── 📂 src/                          (6 source files)
-│   ├── cli.ts                       (380 lines) ← Main app
-│   ├── client.ts                    (230 lines) ← WhatsApp
-│   ├── ui.ts                        (100 lines) ← Colors
-│   ├── config.ts                    (80 lines)  ← Settings
-│   ├── settings.ts                  (280 lines) ← Menu
-│   └── readline-utils.ts            (20 lines)  ← I/O
-│
+│   ├── cli.tsx                      # Ink app entry + command handling
+│   ├── client.ts                    # WhatsApp wrapper
+│   ├── config.ts                    # Config management
+│   ├── theme.ts                     # TUI color themes
+│   ├── components/                  # App, Sidebar, MainContent, Footer
+│   └── hooks/                       # Terminal size + scroll viewport
 ├── 📂 dist/
-│   └── cli.js                       (14.92 MB) ✅ Compiled
-│
+│   └── cli.js                       (bundled) ✅ Compiled
 ├── 📄 Documentation (5 files)
 │   ├── README.md                    (Full guide)
 │   ├── QUICKSTART.md                (Quick ref)
 │   ├── SESSION_PERSISTENCE.md       (Sessions)
 │   ├── CLI_ENHANCEMENTS.md          (Features)
 │   └── PROJECT_SUMMARY.md           (This)
-│
 ├── 📂 Auto-generated (on first run)
 │   ├── .wwebjs_auth_session/        (Session)
 │   ├── .wwebjs_cache/               (Cache)
-│   └── .whatsapp-cli-config.json    (Settings)
-│
+│   └── .whatsapp-cli/               (Data dir)
 └── 📄 Config files
     ├── package.json                 (Updated deps)
     ├── tsconfig.json
@@ -142,13 +138,11 @@ Test Status:             ✅ All working
 | TypeScript      | ^5.9.3   | Type safety     |
 | Node.js         | 18+      | Runtime         |
 | Bun             | 1.0+     | Package manager |
-| whatsapp-web.js | ^1.34.6  | WhatsApp API    |
+| whatsapp-web.js | ^1.34.7  | WhatsApp API    |
 | qrcode-terminal | ^0.12.0  | QR codes        |
-| puppeteer       | ^24.37.2 | Browser control |
-| chalk           | ^5.3.0   | ⭐ Colors       |
-| dotenv          | ^16.3.1  | Env vars        |
+| puppeteer       | ^24.42.0 | Browser control |
 | ESLint          | ^10.0.0  | Linting         |
-| Prettier        | ^3.8.1   | Formatting      |
+| Prettier        | ^3.9.4   | Formatting      |
 
 ## 📚 Documentation
 
@@ -279,8 +273,8 @@ _All acceptable for current scope_
 
 ### Added in This Update
 
-- **chalk** (5.3.0) - Colors & styling
-- **dotenv** (16.3.1) - Environment variables
+- **ink** (7.1.1) - Terminal UI framework
+- **ink-text-input** (6.0.0) - Text input for Ink
 
 ### Removed in This Update
 
@@ -291,9 +285,9 @@ _All acceptable for current scope_
 - whatsapp-web.js
 - qrcode-terminal
 - puppeteer
-- chalk ⭐
-- dotenv
-- TypeScript
+- ink
+- ink-text-input
+- react
 
 ## 🎯 Success Metrics
 

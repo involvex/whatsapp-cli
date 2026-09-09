@@ -100,43 +100,27 @@ bun run start
 
 ```
 src/
-├── cli.ts              # Main CLI logic (380 lines)
-├── client.ts           # WhatsApp wrapper (230 lines)
-├── ui.ts               # Chalk-based UI utilities (100 lines)
-├── config.ts           # Configuration management (80 lines)
-├── settings.ts         # Interactive settings menu (280 lines)
-├── readline-utils.ts   # Terminal helpers (20 lines)
-└── ai-provider.ts      # (Future) AI message generation
+├── cli.tsx              # Ink app entry + command handling
+├── client.ts            # whatsapp-web.js lifecycle
+├── config.ts            # ~/.whatsapp-cli config paths
+├── theme.ts             # TUI color themes
+├── components/          # App, Sidebar, MainContent, Footer
+└── hooks/               # Terminal size + scroll viewport
+```
 
 Config:
-└── ~/.whatsapp-cli/config.json  # Settings file (auto-created)
-```
+└── ~/.whatsapp-cli/config.json # Settings file (auto-created)
+
+````
 
 ## Key Features
 
 ✅ QR code authentication in terminal
 ✅ Load chats and messages
 ✅ Send/receive messages in real-time
-✅ **Beautiful colored output with chalk**
-✅ **Real-time message sidebar**
-✅ **Interactive settings menu**
-✅ **Session persistence** (no re-auth needed)
-✅ **AI integration ready**
+✅ Session persistence (no re-auth needed)
 ✅ Simple menu interface
-✅ No external UI framework (@opentui removed)
 ✅ Production-ready
-
-## Quick AI Setup
-
-```
-Press 6 → Settings
-Press 1 → Configure AI Provider → Choose "openrouter"
-Press 2 → Set AI Model → Choose "auto" or specific model
-Press 3 → Set API Key → Paste your OPENROUTER_API_KEY
-Press 8 → Back to main menu
-Press 5 → Toggle AI mode ON
-Send messages → AI enhances them!
-```
 
 ## Troubleshooting
 
@@ -159,13 +143,7 @@ Send messages → AI enhances them!
 
 **Exit doesn't work?**
 
-- Try pressing 8 again (now fixed!)
-- Fallback: Press Ctrl+C
-
-**Colors not showing?**
-
-- Update your terminal emulator
-- Enable 256-color mode in terminal settings
+- Try pressing Q or Ctrl+C
 
 **Build fails?**
 
@@ -176,7 +154,6 @@ Send messages → AI enhances them!
 **Settings not saving?**
 
 - Check if `~/.whatsapp-cli/config.json` is writable
-- Try resetting: Settings → Option 8
 - Edit file manually if needed
 
 ## Scripts
@@ -189,25 +166,23 @@ bun run format       # Format code with Prettier
 bun run typecheck    # TypeScript type checking
 bun run lint         # Lint with ESLint
 bun run lint:fix     # Fix linting issues
-```
+````
 
 ## Dependencies
 
 ### Production
 
-- **whatsapp-web.js** (^1.34.6) - WhatsApp automation
+- **whatsapp-web.js** (^1.34.7) - WhatsApp automation
 - **qrcode-terminal** (^0.12.0) - QR code display in terminal
-- **puppeteer** (^24.37.2) - Browser automation
-- **chalk** (^5.3.0) - Terminal colors and styling
-- **dotenv** (^16.3.1) - Environment variable loading
+- **puppeteer** (^24.42.0) - Browser automation
 
 ### Development
 
 - **TypeScript** (^5.9.3) - Type safety
 - **ESLint** (^10.0.0) - Code linting
-- **Prettier** (^3.8.1) - Code formatting
+- **Prettier** (^3.9.4) - Code formatting
 
-Removed: `@opentui/core` ✂️ (Replaced with lightweight chalk)
+Removed: `@opentui/core` ✂️ (Replaced with Ink TUI)
 
 ## Configuration File
 

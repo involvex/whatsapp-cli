@@ -9,6 +9,10 @@ export interface PersistedMessage {
   time: string;
   fromMe: boolean;
   timestamp: number;
+  mediaType?: string;
+  mimeType?: string;
+  mediaSize?: number;
+  hasMedia?: boolean;
 }
 
 export interface PersistedChat {
@@ -59,13 +63,25 @@ export async function saveChatHistory(chats: PersistedChat[]): Promise<void> {
 export function messageToPersisted(
   msg: import("whatsapp-web.js").Message,
 ): PersistedMessage {
+  const hasMedia = msg.hasMedia;
+  const mediaType = hasMedia ? msg.type : undefined;
+  const mediaMsg = msg as import("whatsapp-web.js").Message & {
+    media?: { mimetype?: string; filesize?: number };
+  };
+  const mimeType = hasMedia ? mediaMsg.media?.mimetype : undefined;
+  const mediaSize = hasMedia ? mediaMsg.media?.filesize : undefined;
   return {
     id: msg.id._serialized,
     sender: msg.from?.split("@")[0] || (msg.id.fromMe ? "Me" : "Unknown"),
-    message: msg.body || "[Media/Sticker]",
+    message:
+      msg.body || (hasMedia ? `[${mediaType || "Media"}]` : "[Media/Sticker]"),
     time: new Date(msg.timestamp * 1000).toLocaleTimeString(),
     fromMe: msg.id.fromMe,
     timestamp: msg.timestamp,
+    mediaType,
+    mimeType,
+    mediaSize,
+    hasMedia,
   };
 }
 

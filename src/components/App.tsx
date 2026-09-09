@@ -15,14 +15,21 @@ interface AppProps {
   aiProvider: string;
   aiModel: string;
   recentMessages: Array<{
+    id: string;
     sender: string;
     message: string;
     time: string;
     fromMe: boolean;
+    mediaType?: string;
+    hasMedia?: boolean;
   }>;
   onCommand: (command: string) => void;
   onSendMessage: (message: string) => void;
+  onSendMedia: (filePath: string) => void;
   onSelectChat: (index: number) => void;
+  onSearch: (query: string) => void;
+  onSearchNext: () => void;
+  onSearchPrev: () => void;
   activeChat: Chat | null;
   qrCode?: string | null;
   currentView?: "chat" | "about" | "settings";
@@ -31,6 +38,10 @@ interface AppProps {
   connectionError?: string | null;
   reconnectAttempt?: number;
   reconnectMax?: number;
+  searchQuery?: string;
+  searchMatchIndex?: number;
+  searchMatchCount?: number;
+  searchMatchIds?: Set<string>;
 }
 
 const INPUT_BAR_HEIGHT = 3;
@@ -45,7 +56,11 @@ export const App: React.FC<AppProps> = ({
   recentMessages,
   onCommand,
   onSendMessage,
+  onSendMedia,
   onSelectChat,
+  onSearch,
+  onSearchNext,
+  onSearchPrev,
   activeChat,
   qrCode,
   currentView = "chat",
@@ -54,12 +69,16 @@ export const App: React.FC<AppProps> = ({
   connectionError = null,
   reconnectAttempt = 0,
   reconnectMax = 3,
+  searchQuery = "",
+  searchMatchIndex = -1,
+  searchMatchCount = 0,
+  searchMatchIds = new Set(),
 }) => {
   const theme = useTheme();
   const { exit } = useApp();
   const { rows, columns } = useTerminalSize();
   const [inputMode, setInputMode] = useState<
-    "command" | "message" | "chat-select"
+    "command" | "message" | "chat-select" | "send-media" | "search"
   >("command");
   const [inputValue, setInputValue] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -71,6 +90,16 @@ export const App: React.FC<AppProps> = ({
 
   useInput((input, key) => {
     if (inputMode === "command") {
+      if (searchQuery && searchMatchCount > 0) {
+        if (key.upArrow) {
+          onSearchPrev();
+          return;
+        }
+        if (key.downArrow) {
+          onSearchNext();
+          return;
+        }
+      }
       if (key.upArrow) {
         const max = initialChats.length - 1;
         if (max >= 0) {
@@ -107,6 +136,12 @@ export const App: React.FC<AppProps> = ({
         exit();
         process.exit(0);
       }
+      if (input === "/" || input === "f" || input === "F") {
+        setInputMode("search");
+        setInputValue("");
+        setStatusMessage("Search messages...");
+        return;
+      }
       if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(input)) {
         if (input === "2") {
           setInputMode("chat-select");
@@ -122,6 +157,15 @@ export const App: React.FC<AppProps> = ({
           }
         } else {
           onCommand(input);
+        }
+      }
+      if (input === "m" || input === "M") {
+        if (!activeChat) {
+          setStatusMessage("Open a chat first");
+        } else {
+          setInputMode("send-media");
+          setInputValue("");
+          setStatusMessage("Enter file path to send");
         }
       }
     } else if (key.escape) {
@@ -152,6 +196,18 @@ export const App: React.FC<AppProps> = ({
       setInputMode("command");
       setInputValue("");
       setStatusMessage("");
+    } else if (inputMode === "send-media") {
+      if (value.trim()) {
+        onSendMedia(value);
+      }
+      setInputMode("command");
+      setInputValue("");
+      setStatusMessage("");
+    } else if (inputMode === "search") {
+      onSearch(value);
+      setInputMode("command");
+      setInputValue("");
+      setStatusMessage("");
     }
   };
 
@@ -164,6 +220,8 @@ export const App: React.FC<AppProps> = ({
     { num: "6", text: "Settings" },
     { num: "7", text: "About" },
     { num: "8", text: "Logout" },
+    { num: "M", text: "Media" },
+    { num: "/", text: "Search" },
     { num: "Q", text: "Exit" },
   ];
 
@@ -172,7 +230,11 @@ export const App: React.FC<AppProps> = ({
       ? theme.header
       : inputMode === "chat-select"
         ? theme.primary
-        : theme.accent;
+        : inputMode === "send-media"
+          ? theme.accent
+          : inputMode === "search"
+            ? theme.accent
+            : theme.accent;
 
   return (
     <Box
@@ -198,6 +260,10 @@ export const App: React.FC<AppProps> = ({
           qrCode={qrCode}
           view={currentView}
           contentHeight={mainHeight}
+          searchQuery={searchQuery}
+          searchMatchIndex={searchMatchIndex}
+          searchMatchCount={searchMatchCount}
+          searchMatchIds={searchMatchIds}
         />
       </Box>
       {showInputBar && (
@@ -214,7 +280,11 @@ export const App: React.FC<AppProps> = ({
                 ? "NAV"
                 : inputMode === "message"
                   ? "MSG"
-                  : "SEL"}
+                  : inputMode === "send-media"
+                    ? "MED"
+                    : inputMode === "search"
+                      ? "SCH"
+                      : "SEL"}
             </Text>
           </Box>
           {inputMode === "command" ? (
@@ -242,6 +312,9 @@ export const App: React.FC<AppProps> = ({
         connectionError={connectionError}
         reconnectAttempt={reconnectAttempt}
         reconnectMax={reconnectMax}
+        searchQuery={searchQuery}
+        searchMatchIndex={searchMatchIndex}
+        searchMatchCount={searchMatchCount}
       />
     </Box>
   );

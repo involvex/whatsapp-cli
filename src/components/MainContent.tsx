@@ -1,14 +1,17 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Box, Text } from "ink";
-import { getConfig } from "../config";
 import { useTheme } from "../theme";
 import { useScrollViewport } from "../hooks/useScrollViewport";
+import { Settings } from "./Settings";
 
 interface Message {
+  id: string;
   sender: string;
   message: string;
   time: string;
   fromMe: boolean;
+  mediaType?: string;
+  hasMedia?: boolean;
 }
 
 interface MainContentProps {
@@ -18,29 +21,36 @@ interface MainContentProps {
   qrCode?: string | null;
   view?: "chat" | "about" | "settings";
   contentHeight: number;
+  searchQuery?: string;
+  searchMatchIndex?: number;
+  searchMatchCount?: number;
+  searchMatchIds?: Set<string>;
 }
-
-const SettingRow: React.FC<{
-  label: string;
-  value: string;
-  valueColor?: string;
-}> = ({ label, value, valueColor }) => {
-  const theme = useTheme();
-  return (
-    <Box flexDirection="row" gap={1}>
-      <Text color={theme.muted}>{label}:</Text>
-      <Text bold color={(valueColor as typeof theme.primary) || theme.primary}>
-        {value}
-      </Text>
-    </Box>
-  );
-};
 
 const ChatBubble: React.FC<{
   message: Message;
   showSender: boolean;
-}> = ({ message, showSender }) => {
+  isSearchMatch?: boolean;
+}> = ({ message, showSender, isSearchMatch }) => {
   const theme = useTheme();
+
+  const mediaLabel = useMemo(() => {
+    if (!message.hasMedia) return null;
+    const type = message.mediaType || "media";
+    const icon =
+      type === "image"
+        ? "🖼"
+        : type === "video"
+          ? "🎬"
+          : type === "audio"
+            ? "🎵"
+            : type === "document"
+              ? "📄"
+              : type === "sticker"
+                ? "😀"
+                : "📎";
+    return `${icon} ${type}`;
+  }, [message.hasMedia, message.mediaType]);
 
   return (
     <Box
@@ -56,11 +66,18 @@ const ChatBubble: React.FC<{
       <Box
         paddingX={1}
         borderStyle="single"
-        borderColor={message.fromMe ? theme.outgoing : theme.incoming}
+        borderColor={
+          isSearchMatch
+            ? theme.accent
+            : message.fromMe
+              ? theme.outgoing
+              : theme.incoming
+        }
         flexDirection="column"
         maxWidth={50}
       >
-        <Text color={theme.primary} wrap="wrap">
+        {mediaLabel && <Text color={theme.accent}>{mediaLabel}</Text>}
+        <Text color={isSearchMatch ? theme.accent : theme.primary} wrap="wrap">
           {message.message}
         </Text>
         <Text color={theme.muted}>
@@ -79,21 +96,45 @@ export const MainContent: React.FC<MainContentProps> = ({
   qrCode,
   view = "chat",
   contentHeight,
+  searchQuery = "",
+  searchMatchIndex = -1,
+  searchMatchCount = 0,
+  searchMatchIds = new Set(),
 }) => {
   const theme = useTheme();
-  const config = getConfig();
   const messageVisibleCount = Math.max(1, contentHeight - 4);
   const messageCursor = Math.max(0, messages.length - 1);
-  const { visibleItems: visibleMessages } = useScrollViewport(
-    messages,
-    messageVisibleCount,
-    messageCursor,
-  );
+  const { visibleItems: visibleMessages, ensureIndexVisible } =
+    useScrollViewport(messages, messageVisibleCount, messageCursor);
+
+  const searchMatches = useMemo(() => {
+    if (!searchQuery) return new Set<string>();
+    return searchMatchIds;
+  }, [searchQuery, searchMatchIds]);
 
   const displayMessages = useMemo(() => {
     if (messages.length <= messageVisibleCount) return messages;
     return visibleMessages;
   }, [messages, messageVisibleCount, visibleMessages]);
+
+  useEffect(() => {
+    if (searchQuery && searchMatchCount > 0 && searchMatchIndex >= 0) {
+      const matchIdsArray = Array.from(searchMatchIds);
+      const selectedId = matchIdsArray[searchMatchIndex];
+      if (selectedId) {
+        const idx = messages.findIndex(m => m.id === selectedId);
+        if (idx >= 0) {
+          ensureIndexVisible(idx);
+        }
+      }
+    }
+  }, [
+    searchMatchIndex,
+    searchMatchIds,
+    searchQuery,
+    messages,
+    ensureIndexVisible,
+  ]);
 
   if (qrCode) {
     return (
@@ -152,43 +193,7 @@ export const MainContent: React.FC<MainContentProps> = ({
   }
 
   if (view === "settings") {
-    return (
-      <Box
-        flexDirection="column"
-        flexGrow={1}
-        height={contentHeight}
-        paddingX={1}
-        borderStyle="single"
-        borderColor={theme.border}
-        overflow="hidden"
-      >
-        <Text bold color={theme.header}>
-          SETTINGS
-        </Text>
-        <SettingRow
-          label="AI Provider"
-          value={config.aiProvider.provider}
-          valueColor={theme.header}
-        />
-        <SettingRow label="AI Model" value={config.aiProvider.model} />
-        <SettingRow
-          label="Theme"
-          value={config.theme}
-          valueColor={theme.primary}
-        />
-        <SettingRow label="Message Limit" value={String(config.messageLimit)} />
-        <SettingRow
-          label="Auto Reconnect"
-          value={config.autoReconnect ? "On" : "Off"}
-          valueColor={config.autoReconnect ? theme.primary : theme.error}
-        />
-        <SettingRow
-          label="Chat History"
-          value={config.chatHistoryEnabled ? "On" : "Off"}
-        />
-        <Text color={theme.muted}>Edit ~/.whatsapp-cli/config.json</Text>
-      </Box>
-    );
+    return <Settings />;
   }
 
   return (
@@ -223,9 +228,16 @@ export const MainContent: React.FC<MainContentProps> = ({
               const prevMsg = index > 0 ? displayMessages[index - 1] : null;
               const showSender = !prevMsg || prevMsg.fromMe !== msg.fromMe;
               const key = `${msg.fromMe ? "out" : "in"}-${msg.time}-${index}`;
+              const isSearchMatch =
+                searchQuery.length > 0 && searchMatches.has(msg.id);
 
               return (
-                <ChatBubble key={key} message={msg} showSender={showSender} />
+                <ChatBubble
+                  key={key}
+                  message={msg}
+                  showSender={showSender}
+                  isSearchMatch={isSearchMatch}
+                />
               );
             })
           ) : (
@@ -244,6 +256,14 @@ export const MainContent: React.FC<MainContentProps> = ({
             [{opt.num}]{opt.text}{" "}
           </Text>
         ))}
+        {searchQuery && searchMatchCount > 0 && (
+          <Text color={theme.accent}>
+            [{searchMatchIndex + 1}/{searchMatchCount}] matches{" "}
+          </Text>
+        )}
+        {searchQuery && searchMatchCount === 0 && (
+          <Text color={theme.error}>[0 matches] </Text>
+        )}
       </Box>
     </Box>
   );

@@ -14,6 +14,7 @@ export const PATHS = {
   logs: path.join(WHATSAPP_CLI_DIR, "logs"),
   cache: path.join(WHATSAPP_CLI_DIR, "cache"),
   chatHistory: path.join(WHATSAPP_CLI_DIR, "chat-history.json"),
+  downloads: path.join(WHATSAPP_CLI_DIR, "downloads"),
 } as const;
 
 export interface AiProviderConfig {
@@ -41,6 +42,7 @@ export interface CliConfig {
   logging: LoggingConfig;
   chatHistoryEnabled: boolean;
   soundEnabled: boolean;
+  autoDownloadMedia: boolean;
 }
 
 const DEFAULT_CONFIG: CliConfig = {
@@ -64,6 +66,7 @@ const DEFAULT_CONFIG: CliConfig = {
   },
   chatHistoryEnabled: true,
   soundEnabled: true,
+  autoDownloadMedia: true,
 };
 
 const AVAILABLE_MODELS: Record<string, string[]> = {

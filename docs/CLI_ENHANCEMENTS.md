@@ -2,162 +2,39 @@
 
 ## What's New
 
-### 1. ✨ Beautiful Colored Output (Chalk Library)
+### 1. Ink-based Terminal UI
 
-All console output now uses **chalk** for professional styling:
+Full-screen terminal interface built with React + Ink:
 
-```typescript
-// Success messages
-✅ Message sent successfully!
+- Matrix/default/dark/colorful themes
+- Scrollable sidebar and message pane
+- Keyboard-driven navigation
+- QR code authentication in terminal
 
-// Error messages
-❌ No chat selected. Please select a chat first
+### 2. Session Persistence
 
-// Warning messages
-⚠️  Message cannot be empty
+WhatsApp sessions are stored under `~/.whatsapp-cli/auth/` and auto-restore on restart.
 
-// Info messages
-ℹ️  No chats available
+### 3. Real-Time Message Sidebar
 
-// Loading indicators
-⏳ Sending message...
+The sidebar shows recent chats with unread counts and message previews, updating as new messages arrive.
 
-// AI indicators
-🤖 AI Mode: ON
-```
+### 4. Inline Settings Editor
 
-### 2. 📬 Real-Time Message Sidebar
+Press `[6]` to open an interactive settings screen where you can edit:
 
-Every screen displays recent messages in a sidebar:
+- Theme selection
+- Message limit
+- Auto-reconnect toggle
+- Sound toggle
+- Chat history toggle
+- AI provider, model, API key, temperature, max tokens
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-             WhatsApp CLI - AI Enabled Edition
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Changes persist immediately to `~/.whatsapp-cli/config.json`.
 
-✅ Connected to WhatsApp 🤖 AI: ON
+### 5. Chat History Persistence
 
-📍 Active chat: Group Chat
-
-📬 Recent Messages:
-  📥 [14:23:41] Alice: Hey! How are you?
-  📥 [14:22:15] Bob: Check this out...
-  📤 [14:20:30] You: Thanks for the info!
-  📥 [14:18:45] Charlie: See you soon
-  📥 [14:15:20] Alice: Great to hear!
-
-📱 Available Commands:
-  1. List chats
-  2. Select chat
-  ...
-```
-
-**Features:**
-
-- ✅ Shows last 5 messages
-- ✅ Updates in real-time as new messages arrive
-- ✅ Distinguishes incoming (📥) vs outgoing (📤) messages
-- ✅ Shows timestamp and sender
-- ✅ Truncates long messages for readability
-
-### 3. ⚙️ Interactive Settings Menu (Option 6)
-
-Complete configuration panel for all AI and app settings:
-
-```
-⚙️  Settings Menu
-
-Current Configuration:
-  AI Provider  : openrouter
-  AI Model     : claude-3-opus
-  Theme        : default
-  Message Limit: 15
-  Auto-Reconnect: Enabled
-
-1. Configure AI Provider
-2. Set AI Model
-3. Set API Key
-4. Adjust Temperature (Creativity)
-5. Set Max Tokens
-6. Change Theme
-7. Reset to Default
-8. Back to Main Menu
-```
-
-#### Settings Available
-
-**AI Provider**
-
-- `none` - Disable AI (default)
-- `openrouter` - Multi-model support
-- `openai` - GPT models
-- `gemini` - Google Gemini
-
-**AI Models** (per provider)
-
-- OpenRouter: auto, claude-3-opus, claude-3-sonnet, gpt-4-turbo, gpt-4, gpt-3.5-turbo
-- OpenAI: gpt-4, gpt-4-turbo, gpt-3.5-turbo
-- Gemini: gemini-pro, gemini-1.5-pro
-
-**Temperature** (0-1)
-
-- Lower (0.1-0.4): More consistent, factual
-- Medium (0.5-0.7): Balanced (recommended)
-- Higher (0.8-1.0): More creative, varied
-
-**Max Tokens** (1-4000)
-
-- Lower (100-300): Short responses
-- Medium (300-500): Balanced (recommended)
-- Higher (500-2000): Longer responses
-
-### 4. 🔧 Persistent Configuration
-
-Settings are saved automatically to `.whatsapp-cli-config.json`:
-
-```json
-{
-  "aiProvider": {
-    "provider": "openrouter",
-    "model": "claude-3-opus",
-    "apiKey": "sk-or-v1-...",
-    "temperature": 0.7,
-    "maxTokens": 500
-  },
-  "theme": "default",
-  "messageLimit": 15,
-  "autoReconnect": true
-}
-```
-
-**Benefits:**
-
-- Settings persist across restarts
-- Easy to edit manually if needed
-- Human-readable JSON format
-- Not included in git (in .gitignore)
-
-### 5. ✅ Fixed Exit Command
-
-The exit command (Option 8) now works properly:
-
-- Gracefully closes the readline interface
-- Cleans up resources
-- Exits the process properly
-- No hanging processes
-
-### 6. 📊 Enhanced Main Menu
-
-Updated from 7 to 8 options:
-
-1. List chats
-2. Select chat
-3. Send message
-4. Show chat history
-5. Toggle AI mode
-6. **Settings** (NEW - replaces logout)
-7. Logout & reset
-8. Exit (now properly exits)
+Message history is saved to `~/.whatsapp-cli/chat-history.json` with a last-sync timestamp.
 
 ## New Dependencies
 
@@ -278,7 +155,6 @@ Main Menu → Press 6 → Press 7 → Confirm → Reset complete
 
 - **Startup time**: ~5-10 seconds (unchanged)
 - **Memory usage**: ~150-300MB (unchanged)
-- **Binary size**: 14.92MB (14MB = chalk library)
 - **Settings load**: <10ms
 - **Sidebar update**: <5ms per message
 
@@ -290,24 +166,14 @@ Main Menu → Press 6 → Press 7 → Confirm → Reset complete
 
 **Solution**:
 
-1. Check if `.whatsapp-cli-config.json` exists
-2. Verify write permissions: `ls -la .whatsapp-cli-config.json`
-3. Manually edit the file if needed
+1. Check if `~/.whatsapp-cli/config.json` is writable
+2. Verify permissions and retry
+3. Edit file manually if needed
 4. Restart the app
-
-### Colors Not Showing
-
-**Problem**: Output appears as plain text
-
-**Solution**:
-
-1. Ensure terminal supports ANSI colors (most modern terminals do)
-2. Check terminal settings - enable 256-color mode
-3. Try a different terminal emulator
 
 ### Exit Command Hangs
 
-**Problem**: App doesn't exit when pressing 8
+**Problem**: App doesn't exit when pressing Q
 
 **Solution**:
 
@@ -350,7 +216,7 @@ export async function generateAiMessage(
 }
 ```
 
-2. Integrate into `cli.ts` `sendMessage` function:
+2. Integrate into `cli.tsx` `sendMessage` function:
 
 ```typescript
 if (state.aiEnabled && config.aiProvider.provider !== "none") {
@@ -365,9 +231,9 @@ if (state.aiEnabled && config.aiProvider.provider !== "none") {
 
 This update transforms the CLI from a basic functional tool to a production-grade application with:
 
-- 🎨 Professional UI with colors and formatting
+- 🎨 Professional Ink TUI with multiple themes
 - 📊 Real-time information display
-- ⚙️ Comprehensive settings management
+- ⚙️ Inline settings editing
 - 🔄 Persistent configuration
 - ✅ Proper cleanup and exit handling
 
