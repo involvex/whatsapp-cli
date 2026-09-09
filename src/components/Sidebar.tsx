@@ -10,6 +10,7 @@ interface SidebarProps {
   isConnected: boolean;
   cursorIndex?: number;
   listHeight: number;
+  connectionError?: string | null;
 }
 
 const ChatListItem: React.FC<{
@@ -48,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isConnected,
   cursorIndex = 0,
   listHeight,
+  connectionError = null,
 }) => {
   const theme = useTheme();
   const visibleCount = Math.max(1, listHeight - 3);
@@ -80,10 +82,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <Box flexDirection="column" flexGrow={1} overflow="hidden">
         {visibleItems.length === 0 ? (
-          <Box paddingX={1}>
+          <Box paddingX={1} flexDirection="column">
             <Text color={theme.muted}>
-              {isConnected ? "Loading..." : "Connect to load"}
+              {!isConnected ? "Connecting..." : "Loading chats..."}
             </Text>
+            {isConnected && connectionError ? (
+              <Text color={theme.error} wrap="wrap">
+                {connectionError}
+              </Text>
+            ) : null}
+            {isConnected && !connectionError ? (
+              <Text color={theme.muted} wrap="wrap">
+                Syncing... press [1] to retry
+              </Text>
+            ) : null}
           </Box>
         ) : (
           visibleItems.map((chat, i) => {

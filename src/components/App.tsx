@@ -142,7 +142,7 @@ export const App: React.FC<AppProps> = ({
         setStatusMessage("Search messages...");
         return;
       }
-      if (["1", "2", "3", "4", "5", "6", "7", "8"].includes(input)) {
+      if (["0", "1", "2", "3", "4", "5", "6", "7", "8"].includes(input)) {
         if (input === "2") {
           setInputMode("chat-select");
           setInputValue("");
@@ -250,6 +250,7 @@ export const App: React.FC<AppProps> = ({
           isConnected={isConnected}
           cursorIndex={sidebarCursor}
           listHeight={mainHeight}
+          connectionError={connectionError}
         />
         <MainContent
           activeChatName={
@@ -291,7 +292,11 @@ export const App: React.FC<AppProps> = ({
             <Text color={theme.muted}>
               {initialChats.length > 0
                 ? `Chat ${sidebarCursor + 1}/${initialChats.length} · ↑↓ nav · ↵ open`
-                : "Waiting for chats..."}
+                : connectionError
+                  ? `${connectionError}`
+                  : isConnected
+                    ? "Loading chats... press [1] to retry"
+                    : "Connecting to WhatsApp..."}
             </Text>
           ) : (
             <TextInput

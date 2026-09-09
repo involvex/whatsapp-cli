@@ -23,7 +23,7 @@ let loadingScreenCallback: ((percent: number) => void) | null = null;
 let connectionAttempts = 0;
 let isLoggingOut = false;
 const MAX_RETRY_ATTEMPTS = 3;
-const INIT_TIMEOUT_MS = 60_000;
+const INIT_TIMEOUT_MS = 120_000;
 const RECONNECT_DELAY_MS = 5_000;
 const DEFAULT_PUPPETEER_CACHE_DIR = path.join(
   os.homedir(),
@@ -412,6 +412,12 @@ function createPuppeteerOptions(
       "--disable-gpu",
       "--disable-web-security",
       "--disable-features=VizDisplayCompositor",
+      // WhatsApp Web rejects the default headless UA ("HeadlessChrome/...")
+      // with an "update your browser" interstitial, so the app never loads
+      // and every page.evaluate dies with "Execution context was destroyed".
+      // Spoof a regular desktop Chrome UA instead.
+      "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36",
+      "--disable-blink-features=AutomationControlled",
     ],
   };
 }
@@ -516,7 +522,7 @@ export async function initializeClient(): Promise<Client> {
       initTimedOut = true;
       initPromise = null;
       void destroyClient();
-      reject(new Error("Client initialization timed out after 60s"));
+      reject(new Error("Client initialization timed out after 120s"));
       if (errorCallback) {
         errorCallback(new Error("Client initialization timed out"));
       }

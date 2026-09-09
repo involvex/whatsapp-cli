@@ -99,11 +99,21 @@ export const Footer: React.FC<FooterProps> = ({
             <Text color={theme.header}>{lastMessage}</Text>
           </>
         )}
-        {historyError && <Text color={theme.error}> · {historyError}</Text>}
-        {connectionError && (
-          <Text color={theme.error}> · {connectionError}</Text>
-        )}
       </Box>
+      {historyError && (
+        <Box flexDirection="row">
+          <Text color={theme.error} wrap="wrap">
+            ⚠ {historyError}
+          </Text>
+        </Box>
+      )}
+      {connectionError && (
+        <Box flexDirection="row">
+          <Text color={theme.error} wrap="wrap">
+            ⚠ {connectionError}
+          </Text>
+        </Box>
+      )}
       <Text color={theme.primary}>
         {searchQuery
           ? "[↑↓] matches [Esc] clear [Q] Exit"
