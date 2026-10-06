@@ -45,6 +45,7 @@
 		"build": "bun build src/cli.tsx --outdir dist --target node && node scripts/write-cli-wrapper.mjs",
 		"dev": "bun run --watch src/cli.tsx",
 		"format": "prettier --write .",
+		"format:check": "prettier --check .",
 		"lint": "eslint . --ignore-pattern .wwebjs_auth_session --ignore-pattern dist",
 		"lint:fix": "eslint . --fix --ignore-pattern .wwebjs_auth_session --ignore-pattern dist",
 		"prepublishOnly": "bun run build",
