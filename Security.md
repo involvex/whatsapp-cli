@@ -76,16 +76,16 @@ This application uses Puppeteer to control Chrome:
 
 ```typescript
 const puppeteerOptions: LaunchOptions = {
-  headless: true,
-  args: [
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-gpu",
-    "--disable-web-security", // ⚠️ Required for WhatsApp Web
-    "--disable-features=VizDisplayCompositor",
-  ],
-};
+	headless: true,
+	args: [
+		'--no-sandbox',
+		'--disable-setuid-sandbox',
+		'--disable-dev-shm-usage',
+		'--disable-gpu',
+		'--disable-web-security', // ⚠️ Required for WhatsApp Web
+		'--disable-features=VizDisplayCompositor',
+	],
+}
 ```
 
 ### WhatsApp Security Considerations

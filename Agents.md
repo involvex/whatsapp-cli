@@ -115,10 +115,10 @@ Automates repetitive messaging tasks while respecting WhatsApp's rate limits.
 ### Agent Metadata
 
 ```yaml
-name: "tui-whatsapp-ai-dev"
-version: "1.0.0"
-description: "WhatsApp CLI development specialist"
-author: "involvex"
+name: tui-whatsapp-ai-dev
+version: 1.0.0
+description: WhatsApp CLI development specialist
+author: involvex
 ```
 
 ### Agent Permissions

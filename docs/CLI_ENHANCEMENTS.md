@@ -190,40 +190,40 @@ To fully implement AI message generation:
 1. Create `src/ai-provider.ts`:
 
 ```typescript
-import { getConfig } from "./config";
+import {getConfig} from './config'
 
 export async function generateAiMessage(
-  userInput: string,
-  context?: string,
+	userInput: string,
+	context?: string,
 ): Promise<string> {
-  const config = getConfig();
+	const config = getConfig()
 
-  if (config.aiProvider.provider === "none") {
-    return userInput; // Return as-is
-  }
+	if (config.aiProvider.provider === 'none') {
+		return userInput // Return as-is
+	}
 
-  // Call appropriate provider
-  switch (config.aiProvider.provider) {
-    case "openrouter":
-      return await callOpenRouter(userInput, context);
-    case "openai":
-      return await callOpenAI(userInput, context);
-    case "gemini":
-      return await callGemini(userInput, context);
-    default:
-      return userInput;
-  }
+	// Call appropriate provider
+	switch (config.aiProvider.provider) {
+		case 'openrouter':
+			return await callOpenRouter(userInput, context)
+		case 'openai':
+			return await callOpenAI(userInput, context)
+		case 'gemini':
+			return await callGemini(userInput, context)
+		default:
+			return userInput
+	}
 }
 ```
 
 2. Integrate into `cli.tsx` `sendMessage` function:
 
 ```typescript
-if (state.aiEnabled && config.aiProvider.provider !== "none") {
-  const aiMessage = await generateAiMessage(message);
-  await state.client.sendMessage(state.activeChatId, aiMessage);
+if (state.aiEnabled && config.aiProvider.provider !== 'none') {
+	const aiMessage = await generateAiMessage(message)
+	await state.client.sendMessage(state.activeChatId, aiMessage)
 } else {
-  await state.client.sendMessage(state.activeChatId, message);
+	await state.client.sendMessage(state.activeChatId, message)
 }
 ```
 

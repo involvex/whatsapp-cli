@@ -1,17 +1,27 @@
 name: NPM Release
-
+permissions:
+  contents: read
+  packages: write
 on:
   release:
-    types: [created]
+    types:
+      - created
+  workflow_dispatch:
+  push:
+    tags:
+      - v*
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2.2.0
+        name: install
       - run: bun i
+        name: build
       - run: bun run build
+        name: publish
       - run: bun publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

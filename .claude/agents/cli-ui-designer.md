@@ -23,18 +23,18 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 ```css
 /* Core terminal styling patterns */
 .terminal {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-  border-radius: 8px;
-  border: 1px solid var(--border-primary);
+	background: var(--bg-primary);
+	color: var(--text-primary);
+	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+	border-radius: 8px;
+	border: 1px solid var(--border-primary);
 }
 
 .terminal-command {
-  background: var(--bg-tertiary);
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-primary);
+	background: var(--bg-tertiary);
+	padding: 1.5rem;
+	border-radius: 8px;
+	border: 1px solid var(--border-primary);
 }
 ```
 
@@ -49,22 +49,22 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```css
 :root {
-  /* Terminal Background Colors */
-  --bg-primary: #0f0f0f;
-  --bg-secondary: #1a1a1a;
-  --bg-tertiary: #2a2a2a;
+	/* Terminal Background Colors */
+	--bg-primary: #0f0f0f;
+	--bg-secondary: #1a1a1a;
+	--bg-tertiary: #2a2a2a;
 
-  /* Terminal Text Colors */
-  --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-accent: #d97706; /* Orange accent */
-  --text-success: #10b981; /* Green for success */
-  --text-warning: #f59e0b; /* Yellow for warnings */
-  --text-error: #ef4444; /* Red for errors */
+	/* Terminal Text Colors */
+	--text-primary: #ffffff;
+	--text-secondary: #a0a0a0;
+	--text-accent: #d97706; /* Orange accent */
+	--text-success: #10b981; /* Green for success */
+	--text-warning: #f59e0b; /* Yellow for warnings */
+	--text-error: #ef4444; /* Red for errors */
 
-  /* Terminal Borders */
-  --border-primary: #404040;
-  --border-secondary: #606060;
+	/* Terminal Borders */
+	--border-primary: #404040;
+	--border-secondary: #606060;
 }
 ```
 
@@ -74,13 +74,13 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <div class="terminal-header">
-  <div class="ascii-title">
-    <pre class="ascii-art">[ASCII ART HERE]</pre>
-  </div>
-  <div class="terminal-subtitle">
-    <span class="status-dot"></span>
-    [Subtitle with status indicator]
-  </div>
+	<div class="ascii-title">
+		<pre class="ascii-art">[ASCII ART HERE]</pre>
+	</div>
+	<div class="terminal-subtitle">
+		<span class="status-dot"></span>
+		[Subtitle with status indicator]
+	</div>
 </div>
 ```
 
@@ -88,14 +88,14 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <div class="terminal-command">
-  <div class="header-content">
-    <h2 class="search-title">
-      <span class="terminal-dot"></span>
-      <strong>[Command Name]</strong>
-      <span class="title-params">([parameters])</span>
-    </h2>
-    <p class="search-subtitle">⎿ [Description]</p>
-  </div>
+	<div class="header-content">
+		<h2 class="search-title">
+			<span class="terminal-dot"></span>
+			<strong>[Command Name]</strong>
+			<span class="title-params">([parameters])</span>
+		</h2>
+		<p class="search-subtitle">⎿ [Description]</p>
+	</div>
 </div>
 ```
 
@@ -103,15 +103,15 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <div class="terminal-search-container">
-  <div class="terminal-search-wrapper">
-    <span class="terminal-prompt">></span>
-    <input
-      type="text"
-      class="terminal-search-input"
-      placeholder="[placeholder]"
-    />
-    <!-- Icons and buttons -->
-  </div>
+	<div class="terminal-search-wrapper">
+		<span class="terminal-prompt">></span>
+		<input
+			type="text"
+			class="terminal-search-input"
+			placeholder="[placeholder]"
+		/>
+		<!-- Icons and buttons -->
+	</div>
 </div>
 ```
 
@@ -119,14 +119,17 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <div class="component-type-filters">
-  <div class="filter-group">
-    <span class="filter-group-label">type:</span>
-    <div class="filter-chips">
-      <button class="filter-chip active" data-filter="[type]">
-        <span class="chip-icon">[emoji]</span>[label]
-      </button>
-    </div>
-  </div>
+	<div class="filter-group">
+		<span class="filter-group-label">type:</span>
+		<div class="filter-chips">
+			<button
+				class="filter-chip active"
+				data-filter="[type]"
+			>
+				<span class="chip-icon">[emoji]</span>[label]
+			</button>
+		</div>
+	</div>
 </div>
 ```
 
@@ -134,9 +137,9 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <div class="command-line">
-  <span class="prompt">$</span>
-  <code class="command">[command here]</code>
-  <button class="copy-btn">[Copy button]</button>
+	<span class="prompt">$</span>
+	<code class="command">[command here]</code>
+	<button class="copy-btn">[Copy button]</button>
 </div>
 ```
 
@@ -146,9 +149,9 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <main class="terminal">
-  <section class="terminal-section">
-    <!-- Content sections -->
-  </section>
+	<section class="terminal-section">
+		<!-- Content sections -->
+	</section>
 </main>
 ```
 
@@ -162,11 +165,11 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```html
 <div class="terminal-card">
-  <div class="card-header">
-    <span class="card-prompt">></span>
-    <h3>[Title]</h3>
-  </div>
-  <div class="card-content">[Content]</div>
+	<div class="card-header">
+		<span class="card-prompt">></span>
+		<h3>[Title]</h3>
+	</div>
+	<div class="card-content">[Content]</div>
 </div>
 ```
 
@@ -176,20 +179,20 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```css
 .terminal-btn {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+	background: var(--bg-primary);
+	border: 1px solid var(--border-primary);
+	color: var(--text-primary);
+	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 .terminal-btn:hover {
-  background: var(--text-accent);
-  border-color: var(--text-accent);
-  color: var(--bg-primary);
+	background: var(--text-accent);
+	border-color: var(--text-accent);
+	color: var(--bg-primary);
 }
 ```
 
@@ -197,18 +200,18 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```css
 .terminal-input {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-primary);
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-  padding: 0.75rem;
-  border-radius: 4px;
-  outline: none;
+	background: var(--bg-secondary);
+	border: 1px solid var(--border-primary);
+	color: var(--text-primary);
+	font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+	padding: 0.75rem;
+	border-radius: 4px;
+	outline: none;
 }
 
 .terminal-input:focus {
-  border-color: var(--text-accent);
-  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
+	border-color: var(--text-accent);
+	box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.2);
 }
 ```
 
@@ -216,23 +219,23 @@ You are a specialized CLI/Terminal UI designer who creates terminal-inspired web
 
 ```css
 .status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-success);
-  display: inline-block;
-  margin-right: 0.5rem;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--text-success);
+	display: inline-block;
+	margin-right: 0.5rem;
 }
 
 .terminal-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-success);
-  display: inline-block;
-  vertical-align: baseline;
-  margin-right: 0.25rem;
-  margin-bottom: 2px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--text-success);
+	display: inline-block;
+	vertical-align: baseline;
+	margin-right: 0.25rem;
+	margin-bottom: 2px;
 }
 ```
 
@@ -252,36 +255,36 @@ When creating a CLI interface:
 ```css
 /* 1. CSS Custom Properties */
 :root {
-  /* Terminal color scheme */
+	/* Terminal color scheme */
 }
 
 /* 2. Base Terminal Styles */
 .terminal {
-  /* Main container */
+	/* Main container */
 }
 
 /* 3. Component Patterns */
 .terminal-command {
-  /* Command sections */
+	/* Command sections */
 }
 .terminal-input {
-  /* Input elements */
+	/* Input elements */
 }
 .terminal-btn {
-  /* Interactive buttons */
+	/* Interactive buttons */
 }
 
 /* 4. Layout Utilities */
 .terminal-grid {
-  /* Grid layouts */
+	/* Grid layouts */
 }
 .terminal-flex {
-  /* Flex layouts */
+	/* Flex layouts */
 }
 
 /* 5. Responsive Design */
 @media (max-width: 768px) {
-  /* Mobile adaptations */
+	/* Mobile adaptations */
 }
 ```
 
@@ -335,11 +338,23 @@ When creating a CLI interface:
 
 ```html
 <nav class="terminal-nav">
-  <div class="nav-prompt">$</div>
-  <ul class="nav-commands">
-    <li><a href="#" class="nav-command">command1</a></li>
-    <li><a href="#" class="nav-command">command2</a></li>
-  </ul>
+	<div class="nav-prompt">$</div>
+	<ul class="nav-commands">
+		<li>
+			<a
+				href="#"
+				class="nav-command"
+				>command1</a
+			>
+		</li>
+		<li>
+			<a
+				href="#"
+				class="nav-command"
+				>command2</a
+			>
+		</li>
+	</ul>
 </nav>
 ```
 
@@ -347,9 +362,13 @@ When creating a CLI interface:
 
 ```html
 <div class="terminal-search">
-  <div class="search-prompt">></div>
-  <input type="text" class="search-input" placeholder="search..." />
-  <div class="search-results"></div>
+	<div class="search-prompt">></div>
+	<input
+		type="text"
+		class="search-input"
+		placeholder="search..."
+	/>
+	<div class="search-results"></div>
 </div>
 ```
 
@@ -357,11 +376,11 @@ When creating a CLI interface:
 
 ```html
 <div class="terminal-output">
-  <div class="output-header">
-    <span class="output-prompt">$</span>
-    <span class="output-command">[command]</span>
-  </div>
-  <div class="output-content">[Formatted data output]</div>
+	<div class="output-header">
+		<span class="output-prompt">$</span>
+		<span class="output-command">[command]</span>
+	</div>
+	<div class="output-content">[Formatted data output]</div>
 </div>
 ```
 
@@ -369,14 +388,14 @@ When creating a CLI interface:
 
 ```html
 <div class="terminal-modal">
-  <div class="modal-terminal">
-    <div class="modal-header">
-      <span class="modal-prompt">></span>
-      <h3>[Title]</h3>
-      <button class="modal-close">×</button>
-    </div>
-    <div class="modal-body">[Content]</div>
-  </div>
+	<div class="modal-terminal">
+		<div class="modal-header">
+			<span class="modal-prompt">></span>
+			<h3>[Title]</h3>
+			<button class="modal-close">×</button>
+		</div>
+		<div class="modal-body">[Content]</div>
+	</div>
 </div>
 ```
 
@@ -420,19 +439,19 @@ project/
 
 ```css
 @keyframes terminal-cursor {
-  0%,
-  50% {
-    opacity: 1;
-  }
-  51%,
-  100% {
-    opacity: 0;
-  }
+	0%,
+	50% {
+		opacity: 1;
+	}
+	51%,
+	100% {
+		opacity: 0;
+	}
 }
 
 .terminal-cursor::after {
-  content: "_";
-  animation: terminal-cursor 1s infinite;
+	content: '_';
+	animation: terminal-cursor 1s infinite;
 }
 ```
 
@@ -445,14 +464,14 @@ project/
 ### 3. Theme Switching
 
 ```css
-[data-theme="dark"] {
-  --bg-primary: #0f0f0f;
-  --text-primary: #ffffff;
+[data-theme='dark'] {
+	--bg-primary: #0f0f0f;
+	--text-primary: #ffffff;
 }
 
-[data-theme="light"] {
-  --bg-primary: #f8f9fa;
-  --text-primary: #1f2937;
+[data-theme='light'] {
+	--bg-primary: #f8f9fa;
+	--text-primary: #1f2937;
 }
 ```
 

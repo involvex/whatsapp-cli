@@ -74,9 +74,9 @@ Specialized agent for WhatsApp CLI development with AI features.
 
 ```json
 {
-  "statusLine": true,
-  "autoApprove": false,
-  "maxTokens": 8000
+	"statusLine": true,
+	"autoApprove": false,
+	"maxTokens": 8000
 }
 ```
 

@@ -190,16 +190,16 @@ Auto-created at `.whatsapp-cli-config.json`:
 
 ```json
 {
-  "aiProvider": {
-    "provider": "none",
-    "model": "auto",
-    "apiKey": "",
-    "temperature": 0.7,
-    "maxTokens": 500
-  },
-  "theme": "default",
-  "messageLimit": 15,
-  "autoReconnect": true
+	"aiProvider": {
+		"provider": "none",
+		"model": "auto",
+		"apiKey": "",
+		"temperature": 0.7,
+		"maxTokens": 500
+	},
+	"theme": "default",
+	"messageLimit": 15,
+	"autoReconnect": true
 }
 ```
 

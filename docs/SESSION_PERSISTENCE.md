@@ -128,14 +128,14 @@ If you override `WHATSAPP_CLI_DIR` into the repo, make sure the auth directory s
 
 ```typescript
 // Check if session already exists - if so, reuse it
-const authPath = PATHS.auth;
+const authPath = PATHS.auth
 const sessionExists = await fs
-  .access(authPath)
-  .then(() => true)
-  .catch(() => false);
+	.access(authPath)
+	.then(() => true)
+	.catch(() => false)
 
 if (sessionExists) {
-  console.log("✓ Found existing session - using saved authentication");
+	console.log('✓ Found existing session - using saved authentication')
 }
 ```
 
@@ -143,12 +143,12 @@ if (sessionExists) {
 
 ```typescript
 export async function clearAuthSession(): Promise<void> {
-  if (clientInstance) {
-    await clientInstance.logout();
-  }
-  await fs.rm(PATHS.auth, { recursive: true, force: true });
-  clientInstance = null;
-  initPromise = null;
+	if (clientInstance) {
+		await clientInstance.logout()
+	}
+	await fs.rm(PATHS.auth, {recursive: true, force: true})
+	clientInstance = null
+	initPromise = null
 }
 ```
 
@@ -156,15 +156,15 @@ export async function clearAuthSession(): Promise<void> {
 
 ```typescript
 async function handleLogout(): Promise<void> {
-  const confirmation = await promptUser(
-    process.stdin as any,
-    "⚠️  Clear authentication and logout? (yes/no): ",
-  );
-  if (confirmation.toLowerCase() === "yes") {
-    await clearAuthSession();
-    console.log("✅ Session cleared. Restart the app to re-authenticate.");
-    state.isExiting = true;
-  }
+	const confirmation = await promptUser(
+		process.stdin as any,
+		'⚠️  Clear authentication and logout? (yes/no): ',
+	)
+	if (confirmation.toLowerCase() === 'yes') {
+		await clearAuthSession()
+		console.log('✅ Session cleared. Restart the app to re-authenticate.')
+		state.isExiting = true
+	}
 }
 ```
 

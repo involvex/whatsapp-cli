@@ -1,83 +1,83 @@
-import pkg from "../package.json";
+import pkg from '../package.json'
 
 export interface CliArgs {
-  headless: boolean;
-  help: boolean;
-  config: boolean;
-  chats: boolean;
-  about: boolean;
-  version: boolean;
-  logLevel?: string;
-  configPath?: string;
+	headless: boolean
+	help: boolean
+	config: boolean
+	chats: boolean
+	about: boolean
+	version: boolean
+	logLevel?: string
+	configPath?: string
 }
 
 export interface PackageInfo {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  license: string;
-  homepage?: string;
-  repository?: string;
+	name: string
+	version: string
+	description: string
+	author: string
+	license: string
+	homepage?: string
+	repository?: string
 }
 
 export function parseArgs(args: string[]): CliArgs {
-  const parsed: CliArgs = {
-    headless: false,
-    help: false,
-    config: false,
-    chats: false,
-    about: false,
-    version: false,
-  };
+	const parsed: CliArgs = {
+		headless: false,
+		help: false,
+		config: false,
+		chats: false,
+		about: false,
+		version: false,
+	}
 
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    switch (arg) {
-      case "--headless":
-      case "-h":
-        parsed.headless = true;
-        break;
-      case "--help":
-        parsed.help = true;
-        break;
-      case "--config":
-      case "-c": {
-        parsed.config = true;
-        const nextConfigArg = args[i + 1];
-        if (nextConfigArg && !nextConfigArg.startsWith("--")) {
-          parsed.configPath = nextConfigArg;
-          i++;
-        }
-        break;
-      }
-      case "--chats":
-        parsed.chats = true;
-        break;
-      case "--about":
-      case "-a":
-        parsed.about = true;
-        break;
-      case "--version":
-      case "-v":
-        parsed.version = true;
-        break;
-      case "--log-level": {
-        const nextLogLevelArg = args[i + 1];
-        if (nextLogLevelArg && !nextLogLevelArg.startsWith("--")) {
-          parsed.logLevel = nextLogLevelArg;
-          i++;
-        }
-        break;
-      }
-    }
-  }
+	for (let i = 0; i < args.length; i++) {
+		const arg = args[i]
+		switch (arg) {
+			case '--headless':
+			case '-h':
+				parsed.headless = true
+				break
+			case '--help':
+				parsed.help = true
+				break
+			case '--config':
+			case '-c': {
+				parsed.config = true
+				const nextConfigArg = args[i + 1]
+				if (nextConfigArg && !nextConfigArg.startsWith('--')) {
+					parsed.configPath = nextConfigArg
+					i++
+				}
+				break
+			}
+			case '--chats':
+				parsed.chats = true
+				break
+			case '--about':
+			case '-a':
+				parsed.about = true
+				break
+			case '--version':
+			case '-v':
+				parsed.version = true
+				break
+			case '--log-level': {
+				const nextLogLevelArg = args[i + 1]
+				if (nextLogLevelArg && !nextLogLevelArg.startsWith('--')) {
+					parsed.logLevel = nextLogLevelArg
+					i++
+				}
+				break
+			}
+		}
+	}
 
-  return parsed;
+	return parsed
 }
 
 export function showHelp(packageInfo: PackageInfo): void {
-  console.log(`
+	console.log(`
 ${packageInfo.name} v${packageInfo.version}
 ${packageInfo.description}
 
@@ -108,12 +108,12 @@ ENVIRONMENT VARIABLES:
   GEMINI_API_KEY               Google Gemini API key
   WHATSAPP_CLI_DIR             Custom config directory (default: ~/.whatsapp-cli)
 
-For more information, visit: ${packageInfo.homepage || "https://github.com/involvex/whatsapp-cli"}
-`);
+For more information, visit: ${packageInfo.homepage || 'https://github.com/involvex/whatsapp-cli'}
+`)
 }
 
 export function showAbout(packageInfo: PackageInfo): void {
-  console.log(`
+	console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                    WhatsApp CLI - About                     ║
 ╠══════════════════════════════════════════════════════════════╣
@@ -129,8 +129,8 @@ export function showAbout(packageInfo: PackageInfo): void {
 ║  Version:        ${packageInfo.version.padEnd(40)}║
 ║  Author:         ${packageInfo.author.padEnd(40)}║
 ║  License:        ${packageInfo.license.padEnd(40)}║
-║  Homepage:       ${(packageInfo.homepage || "N/A").padEnd(40)}║
-║  Repository:     ${((packageInfo.repository ?? "N/A") as string).padEnd(40)}║
+║  Homepage:       ${(packageInfo.homepage || 'N/A').padEnd(40)}║
+║  Repository:     ${((packageInfo.repository ?? 'N/A') as string).padEnd(40)}║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║  Features:                                                   ║
@@ -154,33 +154,33 @@ export function showAbout(packageInfo: PackageInfo): void {
 ║  https://claude.com/claude-code                              ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
-`);
+`)
 }
 
 export function showVersion(packageInfo: PackageInfo): void {
-  console.log(`${packageInfo.name} v${packageInfo.version}`);
+	console.log(`${packageInfo.name} v${packageInfo.version}`)
 }
 
 export async function getPackageInfo(): Promise<PackageInfo> {
-  try {
-    const pkgPath = new URL("../../package.json", import.meta.url);
-    const pkg = await import(pkgPath.href);
-    return {
-      name: pkg.default.name || "whatsapp-cli",
-      version: pkg.default.version || "1.0.0",
-      description: pkg.default.description || "",
-      author: pkg.default.author?.name || pkg.default.author || "involvex",
-      license: pkg.default.license || "MIT",
-      homepage: pkg.default.homepage,
-      repository: pkg.default.repository?.url || pkg.default.repository,
-    };
-  } catch {
-    return {
-      name: "whatsapp-cli",
-      version: pkg.version,
-      description: "WhatsApp CLI",
-      author: "involvex",
-      license: "MIT",
-    };
-  }
+	try {
+		const pkgPath = new URL('../../package.json', import.meta.url)
+		const pkg = await import(pkgPath.href)
+		return {
+			name: pkg.default.name || 'whatsapp-cli',
+			version: pkg.default.version || '1.0.0',
+			description: pkg.default.description || '',
+			author: pkg.default.author?.name || pkg.default.author || 'involvex',
+			license: pkg.default.license || 'MIT',
+			homepage: pkg.default.homepage,
+			repository: pkg.default.repository?.url || pkg.default.repository,
+		}
+	} catch {
+		return {
+			name: 'whatsapp-cli',
+			version: pkg.version,
+			description: 'WhatsApp CLI',
+			author: 'involvex',
+			license: 'MIT',
+		}
+	}
 }

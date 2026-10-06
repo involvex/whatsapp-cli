@@ -1,326 +1,333 @@
-import React, { useState } from "react";
-import { Box, Text, useInput, useApp } from "ink";
-import { Sidebar } from "./Sidebar";
-import { MainContent } from "./MainContent";
-import { Footer, type ConnectionStatus } from "./Footer";
-import type { Chat } from "whatsapp-web.js";
-import TextInput from "ink-text-input";
-import { useTheme } from "../theme";
-import { useTerminalSize } from "../hooks/useTerminalSize";
+import {Box, Text, useApp, useInput} from 'ink'
+import TextInput from 'ink-text-input'
+import React, {useState} from 'react'
+import type {Chat} from 'whatsapp-web.js'
+import {useTerminalSize} from '../hooks/useTerminalSize'
+import {useTheme} from '../theme'
+import {Footer, type ConnectionStatus} from './Footer'
+import {MainContent} from './MainContent'
+import {Sidebar} from './Sidebar'
 
 interface AppProps {
-  initialChats: Chat[];
-  isConnected: boolean;
-  aiEnabled: boolean;
-  aiProvider: string;
-  aiModel: string;
-  recentMessages: Array<{
-    id: string;
-    sender: string;
-    message: string;
-    time: string;
-    fromMe: boolean;
-    mediaType?: string;
-    hasMedia?: boolean;
-  }>;
-  onCommand: (command: string) => void;
-  onSendMessage: (message: string) => void;
-  onSendMedia: (filePath: string) => void;
-  onSelectChat: (index: number) => void;
-  onSearch: (query: string) => void;
-  onSearchNext: () => void;
-  onSearchPrev: () => void;
-  activeChat: Chat | null;
-  qrCode?: string | null;
-  currentView?: "chat" | "about" | "settings";
-  connectionStatus?: ConnectionStatus;
-  historyError?: string | null;
-  connectionError?: string | null;
-  reconnectAttempt?: number;
-  reconnectMax?: number;
-  searchQuery?: string;
-  searchMatchIndex?: number;
-  searchMatchCount?: number;
-  searchMatchIds?: Set<string>;
+	initialChats: Chat[]
+	isConnected: boolean
+	aiEnabled: boolean
+	aiProvider: string
+	aiModel: string
+	recentMessages: Array<{
+		id: string
+		sender: string
+		message: string
+		time: string
+		fromMe: boolean
+		mediaType?: string
+		hasMedia?: boolean
+	}>
+	onCommand: (command: string) => void
+	onSendMessage: (message: string) => void
+	onSendMedia: (filePath: string) => void
+	onSelectChat: (index: number) => void
+	onSearch: (query: string) => void
+	onSearchNext: () => void
+	onSearchPrev: () => void
+	activeChat: Chat | null
+	qrCode?: string | null
+	currentView?: 'chat' | 'about' | 'settings'
+	connectionStatus?: ConnectionStatus
+	historyError?: string | null
+	connectionError?: string | null
+	reconnectAttempt?: number
+	reconnectMax?: number
+	searchQuery?: string
+	searchMatchIndex?: number
+	searchMatchCount?: number
+	searchMatchIds?: Set<string>
 }
 
-const INPUT_BAR_HEIGHT = 3;
-const FOOTER_HEIGHT = 2;
+const INPUT_BAR_HEIGHT = 3
+const FOOTER_HEIGHT = 2
 
 export const App: React.FC<AppProps> = ({
-  initialChats,
-  isConnected,
-  aiEnabled,
-  aiProvider,
-  aiModel,
-  recentMessages,
-  onCommand,
-  onSendMessage,
-  onSendMedia,
-  onSelectChat,
-  onSearch,
-  onSearchNext,
-  onSearchPrev,
-  activeChat,
-  qrCode,
-  currentView = "chat",
-  connectionStatus = "ready",
-  historyError = null,
-  connectionError = null,
-  reconnectAttempt = 0,
-  reconnectMax = 3,
-  searchQuery = "",
-  searchMatchIndex = -1,
-  searchMatchCount = 0,
-  searchMatchIds = new Set(),
+	initialChats,
+	isConnected,
+	aiEnabled,
+	aiProvider,
+	aiModel,
+	recentMessages,
+	onCommand,
+	onSendMessage,
+	onSendMedia,
+	onSelectChat,
+	onSearch,
+	onSearchNext,
+	onSearchPrev,
+	activeChat,
+	qrCode,
+	currentView = 'chat',
+	connectionStatus = 'ready',
+	historyError = null,
+	connectionError = null,
+	reconnectAttempt = 0,
+	reconnectMax = 3,
+	searchQuery = '',
+	searchMatchIndex = -1,
+	searchMatchCount = 0,
+	searchMatchIds = new Set(),
 }) => {
-  const theme = useTheme();
-  const { exit } = useApp();
-  const { rows, columns } = useTerminalSize();
-  const [inputMode, setInputMode] = useState<
-    "command" | "message" | "chat-select" | "send-media" | "search"
-  >("command");
-  const [inputValue, setInputValue] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
-  const [sidebarCursor, setSidebarCursor] = useState(0);
+	const theme = useTheme()
+	const {exit} = useApp()
+	const {rows, columns} = useTerminalSize()
+	const [inputMode, setInputMode] = useState<
+		'command' | 'message' | 'chat-select' | 'send-media' | 'search'
+	>('command')
+	const [inputValue, setInputValue] = useState('')
+	const [statusMessage, setStatusMessage] = useState('')
+	const [sidebarCursor, setSidebarCursor] = useState(0)
 
-  const showInputBar = !qrCode;
-  const chromeHeight = FOOTER_HEIGHT + (showInputBar ? INPUT_BAR_HEIGHT : 0);
-  const mainHeight = Math.max(8, rows - chromeHeight);
+	const showInputBar = !qrCode
+	const chromeHeight = FOOTER_HEIGHT + (showInputBar ? INPUT_BAR_HEIGHT : 0)
+	const mainHeight = Math.max(8, rows - chromeHeight)
 
-  useInput((input, key) => {
-    if (inputMode === "command") {
-      if (searchQuery && searchMatchCount > 0) {
-        if (key.upArrow) {
-          onSearchPrev();
-          return;
-        }
-        if (key.downArrow) {
-          onSearchNext();
-          return;
-        }
-      }
-      if (key.upArrow) {
-        const max = initialChats.length - 1;
-        if (max >= 0) {
-          setStatusMessage("");
-          setSidebarCursor(prev => (prev <= 0 ? max : prev - 1));
-        }
-        return;
-      }
-      if (key.downArrow) {
-        const max = initialChats.length - 1;
-        if (max >= 0) {
-          setStatusMessage("");
-          setSidebarCursor(prev => (prev >= max ? 0 : prev + 1));
-        }
-        return;
-      }
-      if (key.shift && key.return) {
-        if (!activeChat) {
-          setStatusMessage("Open a chat first");
-        } else {
-          setInputMode("message");
-          setInputValue("");
-          setStatusMessage(`Send to: ${activeChat.name || "chat"}`);
-        }
-        return;
-      }
-      if (key.return && initialChats.length > 0) {
-        onSelectChat(sidebarCursor + 1);
-        setStatusMessage("");
-        return;
-      }
+	useInput((input, key) => {
+		if (inputMode === 'command') {
+			if (searchQuery && searchMatchCount > 0) {
+				if (key.upArrow) {
+					onSearchPrev()
+					return
+				}
+				if (key.downArrow) {
+					onSearchNext()
+					return
+				}
+			}
+			if (key.upArrow) {
+				const max = initialChats.length - 1
+				if (max >= 0) {
+					setStatusMessage('')
+					setSidebarCursor(prev => (prev <= 0 ? max : prev - 1))
+				}
+				return
+			}
+			if (key.downArrow) {
+				const max = initialChats.length - 1
+				if (max >= 0) {
+					setStatusMessage('')
+					setSidebarCursor(prev => (prev >= max ? 0 : prev + 1))
+				}
+				return
+			}
+			if (key.shift && key.return) {
+				if (!activeChat) {
+					setStatusMessage('Open a chat first')
+				} else {
+					setInputMode('message')
+					setInputValue('')
+					setStatusMessage(`Send to: ${activeChat.name || 'chat'}`)
+				}
+				return
+			}
+			if (key.return && initialChats.length > 0) {
+				onSelectChat(sidebarCursor + 1)
+				setStatusMessage('')
+				return
+			}
 
-      if (input === "q" || input === "9") {
-        exit();
-        process.exit(0);
-      }
-      if (input === "/" || input === "f" || input === "F") {
-        setInputMode("search");
-        setInputValue("");
-        setStatusMessage("Search messages...");
-        return;
-      }
-      if (["0", "1", "2", "3", "4", "5", "6", "7", "8"].includes(input)) {
-        if (input === "2") {
-          setInputMode("chat-select");
-          setInputValue("");
-          setStatusMessage("Enter chat number");
-        } else if (input === "3") {
-          if (!activeChat) {
-            setStatusMessage("Open a chat first");
-          } else {
-            setInputMode("message");
-            setInputValue("");
-            setStatusMessage(`Send to: ${activeChat.name || "chat"}`);
-          }
-        } else {
-          onCommand(input);
-        }
-      }
-      if (input === "m" || input === "M") {
-        if (!activeChat) {
-          setStatusMessage("Open a chat first");
-        } else {
-          setInputMode("send-media");
-          setInputValue("");
-          setStatusMessage("Enter file path to send");
-        }
-      }
-    } else if (key.escape) {
-      setInputMode("command");
-      setInputValue("");
-      setStatusMessage("");
-      if (activeChat) {
-        const idx = initialChats.findIndex(
-          c => c.id._serialized === activeChat.id._serialized,
-        );
-        if (idx >= 0) setSidebarCursor(idx);
-      }
-    }
-  });
+			if (input === 'q' || input === '9') {
+				exit()
+				process.exit(0)
+			}
+			if (input === '/' || input === 'f' || input === 'F') {
+				setInputMode('search')
+				setInputValue('')
+				setStatusMessage('Search messages...')
+				return
+			}
+			if (['0', '1', '2', '3', '4', '5', '6', '7', '8'].includes(input)) {
+				if (input === '2') {
+					setInputMode('chat-select')
+					setInputValue('')
+					setStatusMessage('Enter chat number')
+				} else if (input === '3') {
+					if (!activeChat) {
+						setStatusMessage('Open a chat first')
+					} else {
+						setInputMode('message')
+						setInputValue('')
+						setStatusMessage(`Send to: ${activeChat.name || 'chat'}`)
+					}
+				} else {
+					onCommand(input)
+				}
+			}
+			if (input === 'm' || input === 'M') {
+				if (!activeChat) {
+					setStatusMessage('Open a chat first')
+				} else {
+					setInputMode('send-media')
+					setInputValue('')
+					setStatusMessage('Enter file path to send')
+				}
+			}
+		} else if (key.escape) {
+			setInputMode('command')
+			setInputValue('')
+			setStatusMessage('')
+			if (activeChat) {
+				const idx = initialChats.findIndex(
+					c => c.id._serialized === activeChat.id._serialized,
+				)
+				if (idx >= 0) setSidebarCursor(idx)
+			}
+		}
+	})
 
-  const handleInputSubmit = (value: string) => {
-    if (inputMode === "chat-select") {
-      const num = parseInt(value, 10);
-      if (!isNaN(num)) {
-        onSelectChat(num);
-      }
-      setInputMode("command");
-      setInputValue("");
-    } else if (inputMode === "message") {
-      if (value.trim()) {
-        onSendMessage(value);
-      }
-      setInputMode("command");
-      setInputValue("");
-      setStatusMessage("");
-    } else if (inputMode === "send-media") {
-      if (value.trim()) {
-        onSendMedia(value);
-      }
-      setInputMode("command");
-      setInputValue("");
-      setStatusMessage("");
-    } else if (inputMode === "search") {
-      onSearch(value);
-      setInputMode("command");
-      setInputValue("");
-      setStatusMessage("");
-    }
-  };
+	const handleInputSubmit = (value: string) => {
+		if (inputMode === 'chat-select') {
+			const num = parseInt(value, 10)
+			if (!isNaN(num)) {
+				onSelectChat(num)
+			}
+			setInputMode('command')
+			setInputValue('')
+		} else if (inputMode === 'message') {
+			if (value.trim()) {
+				onSendMessage(value)
+			}
+			setInputMode('command')
+			setInputValue('')
+			setStatusMessage('')
+		} else if (inputMode === 'send-media') {
+			if (value.trim()) {
+				onSendMedia(value)
+			}
+			setInputMode('command')
+			setInputValue('')
+			setStatusMessage('')
+		} else if (inputMode === 'search') {
+			onSearch(value)
+			setInputMode('command')
+			setInputValue('')
+			setStatusMessage('')
+		}
+	}
 
-  const menuOptions = [
-    { num: "1", text: "Refresh" },
-    { num: "2", text: "Select" },
-    { num: "3", text: "Send" },
-    { num: "4", text: "History" },
-    { num: "5", text: "AI" },
-    { num: "6", text: "Settings" },
-    { num: "7", text: "About" },
-    { num: "8", text: "Logout" },
-    { num: "M", text: "Media" },
-    { num: "/", text: "Search" },
-    { num: "Q", text: "Exit" },
-  ];
+	const menuOptions = [
+		{num: '1', text: 'Refresh'},
+		{num: '2', text: 'Select'},
+		{num: '3', text: 'Send'},
+		{num: '4', text: 'History'},
+		{num: '5', text: 'AI'},
+		{num: '6', text: 'Settings'},
+		{num: '7', text: 'About'},
+		{num: '8', text: 'Logout'},
+		{num: 'M', text: 'Media'},
+		{num: '/', text: 'Search'},
+		{num: 'Q', text: 'Exit'},
+	]
 
-  const inputBorderColor =
-    inputMode === "message"
-      ? theme.header
-      : inputMode === "chat-select"
-        ? theme.primary
-        : inputMode === "send-media"
-          ? theme.accent
-          : inputMode === "search"
-            ? theme.accent
-            : theme.accent;
+	const inputBorderColor =
+		inputMode === 'message'
+			? theme.header
+			: inputMode === 'chat-select'
+				? theme.primary
+				: inputMode === 'send-media'
+					? theme.accent
+					: inputMode === 'search'
+						? theme.accent
+						: theme.accent
 
-  return (
-    <Box
-      flexDirection="column"
-      width={columns}
-      height={rows}
-      backgroundColor={theme.bg}
-    >
-      <Box flexDirection="row" height={mainHeight} flexShrink={0}>
-        <Sidebar
-          chats={initialChats}
-          activeChatId={activeChat?.id._serialized || null}
-          isConnected={isConnected}
-          cursorIndex={sidebarCursor}
-          listHeight={mainHeight}
-          connectionError={connectionError}
-        />
-        <MainContent
-          activeChatName={
-            activeChat ? activeChat.name || activeChat.id.user : null
-          }
-          messages={recentMessages}
-          menuOptions={menuOptions}
-          qrCode={qrCode}
-          view={currentView}
-          contentHeight={mainHeight}
-          searchQuery={searchQuery}
-          searchMatchIndex={searchMatchIndex}
-          searchMatchCount={searchMatchCount}
-          searchMatchIds={searchMatchIds}
-        />
-      </Box>
-      {showInputBar && (
-        <Box
-          paddingX={1}
-          height={INPUT_BAR_HEIGHT}
-          borderStyle="single"
-          borderColor={inputBorderColor}
-          flexShrink={0}
-        >
-          <Box marginRight={1}>
-            <Text bold color={inputBorderColor}>
-              {inputMode === "command"
-                ? "NAV"
-                : inputMode === "message"
-                  ? "MSG"
-                  : inputMode === "send-media"
-                    ? "MED"
-                    : inputMode === "search"
-                      ? "SCH"
-                      : "SEL"}
-            </Text>
-          </Box>
-          {inputMode === "command" ? (
-            <Text color={theme.muted}>
-              {initialChats.length > 0
-                ? `Chat ${sidebarCursor + 1}/${initialChats.length} · ↑↓ nav · ↵ open`
-                : connectionError
-                  ? `${connectionError}`
-                  : isConnected
-                    ? "Loading chats... press [1] to retry"
-                    : "Connecting to WhatsApp..."}
-            </Text>
-          ) : (
-            <TextInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSubmit={handleInputSubmit}
-            />
-          )}
-        </Box>
-      )}
-      <Footer
-        aiEnabled={aiEnabled}
-        aiProvider={aiProvider}
-        aiModel={aiModel}
-        lastMessage={statusMessage}
-        connectionStatus={connectionStatus}
-        historyError={historyError}
-        connectionError={connectionError}
-        reconnectAttempt={reconnectAttempt}
-        reconnectMax={reconnectMax}
-        searchQuery={searchQuery}
-        searchMatchIndex={searchMatchIndex}
-        searchMatchCount={searchMatchCount}
-      />
-    </Box>
-  );
-};
+	return (
+		<Box
+			flexDirection="column"
+			width={columns}
+			height={rows}
+			backgroundColor={theme.bg}
+		>
+			<Box
+				flexDirection="row"
+				height={mainHeight}
+				flexShrink={0}
+			>
+				<Sidebar
+					chats={initialChats}
+					activeChatId={activeChat?.id._serialized || null}
+					isConnected={isConnected}
+					cursorIndex={sidebarCursor}
+					listHeight={mainHeight}
+					connectionError={connectionError}
+				/>
+				<MainContent
+					activeChatName={
+						activeChat ? activeChat.name || activeChat.id.user : null
+					}
+					messages={recentMessages}
+					menuOptions={menuOptions}
+					qrCode={qrCode}
+					view={currentView}
+					contentHeight={mainHeight}
+					searchQuery={searchQuery}
+					searchMatchIndex={searchMatchIndex}
+					searchMatchCount={searchMatchCount}
+					searchMatchIds={searchMatchIds}
+				/>
+			</Box>
+			{showInputBar && (
+				<Box
+					paddingX={1}
+					height={INPUT_BAR_HEIGHT}
+					borderStyle="single"
+					borderColor={inputBorderColor}
+					flexShrink={0}
+				>
+					<Box marginRight={1}>
+						<Text
+							bold
+							color={inputBorderColor}
+						>
+							{inputMode === 'command'
+								? 'NAV'
+								: inputMode === 'message'
+									? 'MSG'
+									: inputMode === 'send-media'
+										? 'MED'
+										: inputMode === 'search'
+											? 'SCH'
+											: 'SEL'}
+						</Text>
+					</Box>
+					{inputMode === 'command' ? (
+						<Text color={theme.muted}>
+							{initialChats.length > 0
+								? `Chat ${sidebarCursor + 1}/${initialChats.length} · ↑↓ nav · ↵ open`
+								: connectionError
+									? `${connectionError}`
+									: isConnected
+										? 'Loading chats... press [1] to retry'
+										: 'Connecting to WhatsApp...'}
+						</Text>
+					) : (
+						<TextInput
+							value={inputValue}
+							onChange={setInputValue}
+							onSubmit={handleInputSubmit}
+						/>
+					)}
+				</Box>
+			)}
+			<Footer
+				aiEnabled={aiEnabled}
+				aiProvider={aiProvider}
+				aiModel={aiModel}
+				lastMessage={statusMessage}
+				connectionStatus={connectionStatus}
+				historyError={historyError}
+				connectionError={connectionError}
+				reconnectAttempt={reconnectAttempt}
+				reconnectMax={reconnectMax}
+				searchQuery={searchQuery}
+				searchMatchIndex={searchMatchIndex}
+				searchMatchCount={searchMatchCount}
+			/>
+		</Box>
+	)
+}
