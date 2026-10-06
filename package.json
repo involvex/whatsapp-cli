@@ -53,6 +53,7 @@
 	},
 	"prettier": "@involvex/prettier-config",
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1146.0",
 		"ink": "^7.1.1",
 		"ink-text-input": "^6.0.0",
 		"puppeteer": "^24.42.0",
